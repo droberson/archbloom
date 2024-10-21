@@ -1,6 +1,4 @@
 /* tdbloom.h
- * TODO: calculate used/remaining capacity of filters
- * TODO: clear expired elements from filters
  */
 #ifndef TDBLOOM_H
 #define TDBLOOM_H
