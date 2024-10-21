@@ -67,7 +67,7 @@ tdbloom_error_t tdbloom_init(tdbloom *tdbf, const size_t expected, const float a
 	tdbf->accuracy   = accuracy;
 	tdbf->start_time = get_monotonic_time();
 
-	// decide which datatype to use for storing timestamps
+	// determine which datatype to use for storing timestamps
 	/// TODO: test this
 	int bytes;
 	if (timeout > UINT64_MAX || sizeof(time_t) == 4 && timeout > UINT32_MAX) {
@@ -112,6 +112,8 @@ void tdbloom_destroy(tdbloom tdbf) {
  *
  * Returns:
  *     Nothing
+ *
+ * TODO: test
  */
 void tdbloom_clear(tdbloom *tdbf) {
 	memset(tdbf->filter, 0, tdbf->filter_size);
@@ -127,9 +129,117 @@ void tdbloom_clear(tdbloom *tdbf) {
  *
  * Returns:
  *     Nothing
+ *
+ * TODO: test
  */
 void tdbloom_reset_start_time(tdbloom *tdbf) {
 	tdbf->start_time = get_monotonic_time();
+}
+
+/* tdbloom_clear_expired() - reap expired data from a time-decaying bloom filter
+ *
+ * Args:
+ *     tdbf - filter to clear expired data from
+ *
+ * Returns:
+ *     number of items removed from the filter
+ *
+ * TODO: test
+ */
+size_t tdbloom_clear_expired(tdbloom *tdbf) {
+	time_t now    = get_monotonic_time();
+	size_t ts     = ((now - tdbf->start_time + tdbf->max_time) % tdbf->max_time) + 1;
+	size_t reaped = 0;
+
+	for (size_t i = 0; i < tdbf->size; i++) {
+		uint64_t value;
+		switch (tdbf->bytes) {
+		case 1: value = ((uint8_t *)tdbf->filter)[i];  break;
+		case 2: value = ((uint16_t *)tdbf->filter)[i]; break;
+		case 4: value = ((uint32_t *)tdbf->filter)[i]; break;
+		case 8: value = ((uint64_t *)tdbf->filter)[i]; break;
+		}
+
+		// set to 0 if expired
+		if (value != 0 && ((ts - value + tdbf->max_time) % tdbf->max_time) > tdbf->timeout) {
+			switch (tdbf->bytes) {
+			case 1: ((uint8_t *)tdbf->filter)[i] = 0;  break;
+			case 2: ((uint16_t *)tdbf->filter)[i] = 0; break;
+			case 4: ((uint32_t *)tdbf->filter)[i] = 0; break;
+			case 8: ((uint64_t *)tdbf->filter)[i] = 0; break;
+			}
+
+			reaped++;
+		}
+	}
+
+	return reaped;
+}
+
+/* tdbloom_count_expired() - count number of expired items in a time-decaying
+ *                           bloom filter.
+ *
+ * Args
+ *     tdbf - filter to count expired items
+ *
+ * Returns:
+ *     number of expired items in filter
+ */
+size_t tdbloom_count_expired(const tdbloom tdbf) {
+	time_t now = get_monotonic_time();
+	size_t ts = ((now - tdbf.start_time + tdbf.max_time) % tdbf.max_time) + 1;
+	size_t expired = 0;
+
+	for (size_t i = 0; i < tdbf.size; i++) {
+		uint64_t value;
+		switch (tdbf.bytes) {
+		case 1: value = ((uint8_t *)tdbf.filter)[i];  break;
+		case 2: value = ((uint16_t *)tdbf.filter)[i]; break;
+		case 4: value = ((uint32_t *)tdbf.filter)[i]; break;
+		case 8: value = ((uint64_t *)tdbf.filter)[i]; break;
+		}
+
+		// set to 0 if expired
+		if (value != 0 && ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+			expired++;
+		}
+	}
+
+	return expired;
+}
+
+/* tdbloom_saturation() - calculate the saturation of a time-decaying bloom
+ *                        filter.
+ *
+ * Args:
+ *     tdbf - filter to calculate saturation
+ *
+ * Return:
+ *     percentage of saturation of filter
+ *
+ * TODO: test this
+ */
+float tdbloom_saturation(const tdbloom tdbf) {
+	size_t irrelevant = 0;
+	time_t now = get_monotonic_time();
+	size_t ts = ((now - tdbf.start_time + tdbf.max_time) % tdbf.max_time) + 1;
+
+	for (size_t i = 0; i < tdbf.size; i++) {
+		size_t value;
+		switch(tdbf.bytes) {
+		case 1: value = ((uint8_t *)tdbf.filter)[i]; break;
+		case 2: value = ((uint16_t *)tdbf.filter)[i]; break;
+		case 4: value = ((uint32_t *)tdbf.filter)[i]; break;
+		case 8: value = ((uint64_t *)tdbf.filter)[i]; break;
+		}
+
+		if (value == 0 || ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+			irrelevant++;
+		}
+	}
+
+	float saturation = 1.0 - ((float)irrelevant / tdbf.size);
+	return saturation * 100;
 }
 
 /* tdbloom_add() - add an element to a time filter

@@ -1,5 +1,6 @@
 /* tdbloom.h
  * TODO: calculate used/remaining capacity of filters
+ * TODO: clear expired elements from filters
  */
 #ifndef TDBLOOM_H
 #define TDBLOOM_H
@@ -59,7 +60,10 @@ tdbloom_error_t  tdbloom_init(tdbloom *,
 							  const size_t);
 void             tdbloom_destroy(tdbloom);
 void             tdbloom_clear(tdbloom *);
+size_t           tdbloom_clear_expired(tdbloom *);
+size_t           tdbloom_count_expired(tdbloom);
 void             tdbloom_reset_start_time(tdbloom *);
+float            tdbloom_saturation(const tdbloom);
 void             tdbloom_add(tdbloom *, void *, const size_t);
 void             tdbloom_add_string(tdbloom, const char *);
 bool             tdbloom_lookup(const tdbloom, void *, const size_t);
