@@ -31,7 +31,7 @@ typedef struct {
 /* function declarations
  */
 bool   bloom_init(bloomfilter *, const size_t, const float);
-void   bloom_destroy(bloomfilter);
+void   bloom_destroy(bloomfilter *);
 double bloom_capacity(bloomfilter);
 bool   bloom_lookup(const bloomfilter, void *, const size_t);
 bool   bloom_lookup_string(const bloomfilter, const char *);

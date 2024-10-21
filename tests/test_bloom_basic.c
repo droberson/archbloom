@@ -59,7 +59,7 @@ int main() {
 
 	// Save to file
 	bloom_save(bf, "/tmp/bloom");
-	bloom_destroy(bf);
+	bloom_destroy(&bf);
 
 	// Load from file
 	bloomfilter newbloom;
@@ -70,8 +70,8 @@ int main() {
 	printf("bitmap size: %d\n", newbloom.bitmap_size);
 
 	printf("filter hex dump: ");
-	for (size_t i = 0; i < bf.bitmap_size; i++) {
-		printf("%02x ", bf.bitmap[i]);
+	for (size_t i = 0; i < newbloom.bitmap_size; i++) {
+		printf("%02x ", newbloom.bitmap[i]);
 	}
 	printf("\n");
 
@@ -104,7 +104,7 @@ int main() {
 	}
 
 	// Cleanup
-	bloom_destroy(newbloom);
+	bloom_destroy(&newbloom);
 
 	remove("/tmp/bloom");
 

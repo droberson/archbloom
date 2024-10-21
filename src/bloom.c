@@ -59,8 +59,11 @@ bool bloom_init(bloomfilter *bf, const size_t expected, const float accuracy) {
  * Returns:
  *     Nothing
  */
-void bloom_destroy(bloomfilter bf) {
-	free(bf.bitmap);
+void bloom_destroy(bloomfilter *bf) {
+	if (bf->bitmap) {
+		free(bf->bitmap);
+		bf->bitmap = NULL;
+	}
 }
 
 /* bloom_capacity() -- returns the occupancy of a bloom filter as a percentage
