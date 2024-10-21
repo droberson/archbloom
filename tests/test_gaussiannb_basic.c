@@ -65,7 +65,7 @@ int main() {
 		   gaussiannb_mahalanobis_distance(&gnb, class2, 2));
 
 
-	gaussiannb_destroy(gnb);
+	gaussiannb_destroy(&gnb);
 
 	return EXIT_SUCCESS;
 }

@@ -26,13 +26,23 @@ bool gaussiannb_init(gaussiannb *gnb, size_t num_classes, size_t num_features) {
 	return true;
 }
 
-void gaussiannb_destroy(gaussiannb gnb) {
-	if (gnb.num_classes > 0) {
-		free(gnb.classes[0].mean);
-		free(gnb.classes[0].variance);
+void gaussiannb_destroy(gaussiannb *gnb) {
+	if (gnb->num_classes > 0) {
+		if (gnb->classes[0].mean) {
+			free(gnb->classes[0].mean);
+			gnb->classes[0].mean = NULL;
+		}
+
+		if (gnb->classes[0].variance) {
+			free(gnb->classes[0].variance);
+			gnb->classes[0].variance = NULL;
+		}
 	}
 
-	free(gnb.classes);
+	if (gnb->classes) {
+		free(gnb->classes);
+		gnb->classes = NULL;
+	}
 }
 
 static void calculate_class_mean(gaussiannbclass *cls, double **X, int *y, size_t num_samples, size_t num_features, int class_label) {

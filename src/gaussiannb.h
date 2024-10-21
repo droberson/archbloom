@@ -31,7 +31,7 @@ typedef struct {
  * TODO: _update, _train, _adjust_weight, should return statuses
  */
 bool   gaussiannb_init(gaussiannb *, size_t, size_t);
-void   gaussiannb_destroy(gaussiannb);
+void   gaussiannb_destroy(gaussiannb *);
 void   gaussiannb_train(gaussiannb *, double **, int *, size_t);
 void   gaussiannb_update(gaussiannb *, double *, int, bool);
 int    gaussiannb_predict(gaussiannb *, double *);
