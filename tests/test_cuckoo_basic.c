@@ -87,8 +87,8 @@ int main() {
 	remove("/tmp/cuckoo");
 	remove("/tmp/cuckoo_newcf");
 
-	cuckoo_destroy(newcf);
-	cuckoo_destroy(cf);
+	cuckoo_destroy(&newcf);
+	cuckoo_destroy(&cf);
 
 	return EXIT_SUCCESS;
 }

@@ -61,9 +61,16 @@ bool cuckoo_init(cuckoofilter *cf, size_t num_buckets, size_t bucket_size,
 	return true;
 }
 
-void cuckoo_destroy(cuckoofilter cf) {
-	free(cf.bucket_insertions);
-	free(cf.buckets);
+void cuckoo_destroy(cuckoofilter *cf) {
+	if (cf->bucket_insertions) {
+		free(cf->bucket_insertions);
+		cf->bucket_insertions = NULL;
+	}
+
+	if (cf->buckets) {
+		free(cf->buckets);
+		cf->buckets = NULL;
+	}
 }
 
 static bool cuckoo_add_fingerprint(cuckoofilter cf, size_t bucket_index, size_t offset, uint16_t fingerprint) {
