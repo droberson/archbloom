@@ -56,7 +56,7 @@ tdbloom_error_t  tdbloom_init(tdbloom *,
 							  const size_t,
 							  const float,
 							  const size_t);
-void             tdbloom_destroy(tdbloom);
+void             tdbloom_destroy(tdbloom *);
 void             tdbloom_clear(tdbloom *);
 size_t           tdbloom_clear_expired(tdbloom *);
 size_t           tdbloom_count_expired(tdbloom);

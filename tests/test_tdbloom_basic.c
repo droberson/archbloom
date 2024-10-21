@@ -96,8 +96,8 @@ int main() {
 	}
 
 	// Cleanup
-	tdbloom_destroy(tf);
-	tdbloom_destroy(tf2);
+	tdbloom_destroy(&tf);
+	tdbloom_destroy(&tf2);
 
 	return EXIT_SUCCESS;
 }

@@ -100,8 +100,11 @@ tdbloom_error_t tdbloom_init(tdbloom *tdbf, const size_t expected, const float a
  * Returns:
  *     Nothing
  */
-void tdbloom_destroy(tdbloom tdbf) {
-	free(tdbf.filter);
+void tdbloom_destroy(tdbloom *tdbf) {
+	if (tdbf->filter) {
+		free(tdbf->filter);
+		tdbf->filter = NULL;
+	}
 }
 
 /* tdbloom_clear() - clear the contents of time-decaying bloom filter and
