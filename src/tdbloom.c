@@ -255,7 +255,7 @@ float tdbloom_saturation(const tdbloom tdbf) {
  * Returns:
  *     Nothing
  */
-void tdbloom_add(tdbloom *tf, void *element, const size_t len) {
+void tdbloom_add(tdbloom *tf, const void *element, const size_t len) {
 	uint64_t    result;
 	uint64_t    hash[2];
 	time_t      now = get_monotonic_time();
@@ -297,7 +297,7 @@ void tdbloom_add_string(tdbloom tdbf, const char *element) {
  *     true if element is in filter
  *     false if element is not in filter
  */
-bool tdbloom_lookup(const tdbloom tdbf, void *element, const size_t len) {
+bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
 	uint64_t    result;
 	uint64_t    hash[2];
 	time_t      now = get_monotonic_time();
