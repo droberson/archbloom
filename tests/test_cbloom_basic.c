@@ -133,7 +133,7 @@ int main() {
 	printf("\thash count: %d\n", cbf16.hashcount);
 	printf("\tcountermap size: %d\n", cbf16.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf16.csize + 3)));
-	cbloom_destroy(cbf16);
+	cbloom_destroy(&cbf16);
 
 	// 32 bit
 	init_result = cbloom_init(&cbf32, 20, 0.01, COUNTER_32BIT);
@@ -165,7 +165,7 @@ int main() {
 		fprintf(stderr, "FAILURE: unable to save 32 bit counter to disk\n");
 		return EXIT_FAILURE;
 	}
-	cbloom_destroy(cbf32);
+	cbloom_destroy(&cbf32);
 	result = cbloom_load(&cbf32, "/tmp/cbf32");
 	if (result != CBF_SUCCESS) {
 		fprintf(stderr, "FAILURE: unable to load 32 bit filter from disk\n");
@@ -196,13 +196,13 @@ int main() {
 	printf("\thash count: %d\n", cbf64.hashcount);
 	printf("\tcountermap size: %d\n", cbf64.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf64.csize + 3)));
-	cbloom_destroy(cbf64);
+	cbloom_destroy(&cbf64);
 
 	// cleanup
 	remove("/tmp/countgbloom");
 
-	cbloom_destroy(cbf);
-	cbloom_destroy(newcbf);
+	cbloom_destroy(&cbf);
+	cbloom_destroy(&newcbf);
 
 	return EXIT_SUCCESS;
 }

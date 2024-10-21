@@ -57,7 +57,7 @@ typedef struct {
 /* function declarations
  */
 cbloom_error_t  cbloom_init(cbloomfilter *, const size_t, const float, counter_size);
-void            cbloom_destroy(cbloomfilter);
+void            cbloom_destroy(cbloomfilter *);
 size_t          cbloom_count(const cbloomfilter, void *, size_t);
 size_t          cbloom_count_string(const cbloomfilter, char *);
 bool            cbloom_lookup(const cbloomfilter, void *, const size_t);

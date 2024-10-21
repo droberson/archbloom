@@ -78,8 +78,11 @@ cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float
  * Returns:
  *     Nothing
  */
-void cbloom_destroy(cbloomfilter cbf) {
-	free(cbf.countermap);
+void cbloom_destroy(cbloomfilter *cbf) {
+	if (cbf->countermap) {
+		free(cbf->countermap);
+		cbf->countermap = NULL;
+	}
 }
 
 /* get_counter, inc_counter, dec_counter -- helper functions used to handle
