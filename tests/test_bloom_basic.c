@@ -4,6 +4,7 @@
 
 #include "bloom.h"
 
+
 int main() {
 	bloomfilter bf;
 
@@ -58,6 +59,7 @@ int main() {
 	printf("\n");
 
 	// Save to file
+	// TODO: randomize /tmp filenames
 	bloom_save(bf, "/tmp/bloom");
 	bloom_destroy(&bf);
 
