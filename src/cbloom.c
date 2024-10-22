@@ -26,6 +26,11 @@
  * size of the elements is determined by the size of the counters.
  *
  * @note This function is static and intended for internal use.
+ *
+ * TODO: move this to its own file because its used in every other
+ *       bloom filter implementation in this collection. perhaps use
+ *       __attribute__((visibility("hidden"))) and compile with
+ *       -fvisibility=hidden?
  */
 static uint64_t ideal_size(const uint64_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
@@ -471,15 +476,18 @@ cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 	return CBF_SUCCESS;
 }
 
-
-/* cbloom_strerror() -- returns string containing error message
+/**
+ * @brief Return a string containing the error message corresponding
+ * to an error code.
  *
- * Args:
- *     error - error number returned from function
+ * This function converts an error code returned by a counting Bloom
+ * filter function into a human-readable error message.
  *
- * Returns:
- *     "Unknown error" if 'error' is out of range. Otherwise, a pointer to
- *     a string containing relevant error message.
+ * @param error The error code returned by a counting Bloom filter
+ * function.
+ *
+ * @return A pointer to a string containing the relevant error
+ * message, or "Unknown error" if the error code is out of range.
  *
  * TODO test
  */
