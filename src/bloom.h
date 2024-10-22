@@ -58,6 +58,8 @@ typedef struct {
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
 void           bloom_destroy(bloomfilter *);
 void           bloom_clear(bloomfilter *);
+size_t         bloom_saturation_count(const bloomfilter);
+float          bloom_saturation(const bloomfilter);
 double         bloom_capacity(const bloomfilter);
 bool           bloom_lookup(const bloomfilter, const void *, const size_t);
 bool           bloom_lookup_string(const bloomfilter, const char *);

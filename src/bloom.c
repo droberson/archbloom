@@ -1,6 +1,4 @@
 /* bloom.c
- * TODO: clear filter
- * TODO: filter saturation
  * TODO: name filters
  */
 #include <stdlib.h>
@@ -72,7 +70,8 @@ void bloom_destroy(bloomfilter *bf) {
 	}
 }
 
-/* bloom_clear - clear the contents of a bloom filter and reset insertion count
+/* bloom_clear() - clear the contents of a bloom filter and reset insertion
+ *                 counter to zero.
  *
  * Args:
  *     bf - filter to clear
@@ -85,6 +84,62 @@ void bloom_destroy(bloomfilter *bf) {
 void bloom_clear(bloomfilter *bf) {
 	memset(bf->bitmap, 0, bf->bitmap_size);
 	bf->insertions = 0;
+}
+
+/* bloom_saturation_count() - calculate number of bits set to 1 in bloom filter
+ *
+ * Args:
+ *     bf - filter to count
+ *
+ * Returns:
+ *     number of bits set to 1 in filter
+ */
+// lookup table for bloom_saturation() and bloom_saturation_count()
+static const uint8_t bit_count_table[256] = {
+    0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+};
+
+// TODO: test
+size_t bloom_saturation_count(const bloomfilter bf) {
+	size_t count = 0;
+
+	for (size_t i = 0; i < bf.bitmap_size; i++) {
+		count += bit_count_table[bf.bitmap[i]];
+	}
+
+	return count;
+}
+
+/* bloom_saturation() - calculate saturation (percentage of bits set in filter)
+ *
+ * Args:
+ *     bf - filter to calculate saturation of
+ *
+ * Returns:
+ *     percentage of bits set in filter
+ *
+ * TODO: test
+ */
+float bloom_saturation(const bloomfilter bf) {
+	size_t total_bits = bf.bitmap_size * 8;
+	size_t set_bits   = bloom_saturation_count(bf);
+
+	return (float)set_bits / total_bits * 100.0;
 }
 
 /* bloom_capacity() - returns the capacity of a bloom filter as a percentage
