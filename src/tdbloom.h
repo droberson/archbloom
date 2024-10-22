@@ -53,9 +53,9 @@ typedef struct {
 /* function definitions
  */
 tdbloom_error_t  tdbloom_init(tdbloom *,
-							  const size_t,
-							  const float,
-							  const size_t);
+                              const size_t,
+                              const float,
+                              const size_t);
 void             tdbloom_destroy(tdbloom *);
 void             tdbloom_clear(tdbloom *);
 size_t           tdbloom_clear_expired(tdbloom *);
@@ -66,6 +66,11 @@ void             tdbloom_add(tdbloom *, const void *, const size_t);
 void             tdbloom_add_string(tdbloom, const char *);
 bool             tdbloom_lookup(const tdbloom, const void *, const size_t);
 bool             tdbloom_lookup_string(const tdbloom, const char *);
+bool             tdbloom_has_expired(const tdbloom, const void *, size_t);
+bool             tdbloom_has_expired_string(const tdbloom, const char *);
+bool             tdbloom_reset_if_expired(tdbloom *, const void *, size_t);
+bool             tdbloom_reset_if_expired_string(tdbloom *, const char *);
+
 tdbloom_error_t  tdbloom_save(tdbloom, const char *);
 tdbloom_error_t  tdbloom_load(tdbloom *, const char *);
 const char      *tdbloom_strerror(tdbloom_error_t);

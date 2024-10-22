@@ -32,16 +32,17 @@ static uint64_t ideal_size(const uint64_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
 }
 
-/* get_monotonic_time() - get monotonic time.
+/**
+ * @brief Retrieves the current monotonic time.
  *
- * This helps account for clock changes on the local system. Relying on time()
- * will ruin the filter if the clock is adjusted on the system.
+ * This function returns the current time based on the monotonic
+ * clock, which is not affected by system clock changes (e.g.,
+ * daylight savings or manual clock adjustments). Using monotonic time
+ * ensures that the filter remains consistent even if the system clock
+ * changes.
  *
- * Args:
- *     None
- *
- * Returns:
- *     time_t holding CLOCK_MONOTONIC value
+ * @return A `time_t` value representing the current monotonic time
+ * (CLOCK_MONOTONIC).
  */
 static time_t get_monotonic_time() {
 	struct timespec ts;
@@ -51,18 +52,21 @@ static time_t get_monotonic_time() {
 	return ts.tv_sec;
 }
 
-/* tdbloom_init() - initialize a time-decaying bloom filter
+/**
+ * @brief Initializes a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf     - pointer to tdbloom structure
- *     expected - maximum expected number of elements
- *     accuracy - acceptable false positive rate. ex: 0.01 == 99.99% accuracy
- *     timeout  - number of seconds an element is valid
+ * This function sets up a time-decaying Bloom filter based on the
+ * expected number of elements, desired accuracy, and the specified
+ * timeout (the duration for which elements remain valid).
  *
- * Returns:
- *     TDBF_SUCCESS on success
- *     TDBF_INVALIDTIMEOUT if value of 'timeout' isn't sane
- *     TDBF_OUTOFMEMORY if unable to allocate memory
+ * @param tdbf Pointer to a time-decaying Bloom filter structure to initialize.
+ * @param expected Maximum expected number of elements to store in the filter.
+ * @param accuracy Acceptable false positive rate (e.g., 0.01 for 99.99% accuracy).
+ * @param timeout Number of seconds an element remains valid before expiring.
+ *
+ * @return TDBF_SUCCESS on success.
+ * @return TDBF_INVALIDTIMEOUT if the value of `timeout` is invalid.
+ * @return TDBF_OUTOFMEMORY if memory allocation fails.
  */
 tdbloom_error_t tdbloom_init(tdbloom *tdbf, const size_t expected, const float accuracy, const size_t timeout) {
 	tdbf->size       = ideal_size(expected, accuracy);
@@ -97,13 +101,13 @@ tdbloom_error_t tdbloom_init(tdbloom *tdbf, const size_t expected, const float a
 	return TDBF_SUCCESS;
 }
 
-/* tdbloom_destroy() - uninitialize a time filter
+/**
+ * @brief Destroys a time-decaying Bloom filter and free associated resources.
  *
- * Args:
- *     tdbf - filter to destroy
+ * This function uninitializes a time-decaying Bloom filter, releasing
+ * any memory that was allocated for it.
  *
- * Returns:
- *     Nothing
+ * @param tdbf Pointer to a time-decaying Bloom filter to destroy.
  */
 void tdbloom_destroy(tdbloom *tdbf) {
 	if (tdbf->filter) {
@@ -112,14 +116,15 @@ void tdbloom_destroy(tdbloom *tdbf) {
 	}
 }
 
-/* tdbloom_clear() - clear the contents of time-decaying bloom filter and
- *                   reset the start time to 'now'
+/**
+ * @brief Clear the contents of a time-decaying Bloom filter and
+ * reset the start time.
  *
- * Args:
- *     tdbf - filter to clear
+ * This function clears all elements in the time-decaying Bloom filter
+ * and resets the start time to the current time (`now`), effectively
+ * resetting the filter.
  *
- * Returns:
- *     Nothing
+ * @param tdbf Pointer to the time-decaying Bloom filter to clear.
  *
  * TODO: test
  */
@@ -128,15 +133,17 @@ void tdbloom_clear(tdbloom *tdbf) {
 	tdbf->start_time = get_monotonic_time();
 }
 
-/* tdbloom_reset_start_time() - resets the start time of a time-decaying bloom
- *                              filter to 'now', which could be useful for
- *                              pausing a filter while preserving its data.
+/**
+ * @brief Reset the start time of a time-decaying Bloom filter to the
+ * current time.
  *
- * Args:
- *     tdbf - filter to reset start time
+ * This function resets the start time of the time-decaying Bloom
+ * filter to the current time (`now`). This could be useful in
+ * scenarios where you want to pause the filter while preserving its
+ * data.
  *
- * Returns:
- *     Nothing
+ * @param tdbf Pointer to the time-decaying Bloom filter for which the
+ * start time will be reset.
  *
  * TODO: test
  */
@@ -144,13 +151,17 @@ void tdbloom_reset_start_time(tdbloom *tdbf) {
 	tdbf->start_time = get_monotonic_time();
 }
 
-/* tdbloom_clear_expired() - reap expired data from a time-decaying bloom filter
+/**
+ * @brief Removes expired data from a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf - filter to clear expired data from
+ * This function clears expired elements from the time-decaying Bloom
+ * filter. It removes any elements that have exceeded their valid
+ * time window.
  *
- * Returns:
- *     number of items removed from the filter
+ * @param tdbf Pointer to the time-decaying Bloom filter to clear
+ * expired data from.
+ *
+ * @return The number of expired items removed from the filter.
  *
  * TODO: test
  */
@@ -184,14 +195,15 @@ size_t tdbloom_clear_expired(tdbloom *tdbf) {
 	return reaped;
 }
 
-/* tdbloom_count_expired() - count number of expired items in a time-decaying
- *                           bloom filter.
+/**
+ * @brief Counts the number of expired items in a time-decaying Bloom filter.
  *
- * Args
- *     tdbf - filter to count expired items
+ * This function returns the number of items in the time-decaying
+ * Bloom filter that have expired and are no longer valid.
  *
- * Returns:
- *     number of expired items in filter
+ * @param tdbf Time-decaying Bloom filter to count expired items in.
+ *
+ * @return The number of expired items in the filter.
  */
 size_t tdbloom_count_expired(const tdbloom tdbf) {
 	time_t now = get_monotonic_time();
@@ -216,14 +228,16 @@ size_t tdbloom_count_expired(const tdbloom tdbf) {
 	return expired;
 }
 
-/* tdbloom_saturation() - calculate the saturation of a time-decaying bloom
- *                        filter.
+/**
+ * @brief Calculates the saturation of a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf - filter to calculate saturation
+ * This function computes the saturation of the time-decaying Bloom
+ * filter, expressed as the percentage of bits that are set,
+ * indicating how full the filter is.
  *
- * Return:
- *     percentage of saturation of filter
+ * @param tdbf Time-decaying Bloom filter to calculate saturation of.
+ *
+ * @return The percentage of saturation in the filter.
  *
  * TODO: test this
  */
@@ -250,15 +264,16 @@ float tdbloom_saturation(const tdbloom tdbf) {
 	return saturation * 100;
 }
 
-/* tdbloom_add() - add an element to a time filter
+/**
+ * @brief Add an element to a time-decaying Bloom filter.
  *
- * Args:
- *     tf      - time filter to add element to
- *     element - element to add to filter
- *     len     - length of element in bytes
+ * This function inserts an element into the time-decaying Bloom
+ * filter, using the current time to track its validity based on the
+ * filter's timeout settings.
  *
- * Returns:
- *     Nothing
+ * @param tf Pointer to the time-decaying Bloom filter to add the element to.
+ * @param element Pointer to the element to add to the filter.
+ * @param len Length of the element in bytes.
  */
 void tdbloom_add(tdbloom *tf, const void *element, const size_t len) {
 	uint64_t    result;
@@ -278,29 +293,33 @@ void tdbloom_add(tdbloom *tf, const void *element, const size_t len) {
 	}
 }
 
-/* tdbloom_add_string() - add a string element to a time filter
+/**
+ * @brief Add a string element to a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf    - time filter to add element to
- *     element - element to add to filter
+ * This function inserts a string element into the time-decaying Bloom
+ * filter, using the current time to track its validity based on the
+ * filter's timeout settings.
  *
- * Returns:
- *     Nothing
+ * @param tdbf Time-decaying Bloom filter to add the string element to.
+ * @param element Pointer to the string element to add to the filter.
  */
 void tdbloom_add_string(tdbloom tdbf, const char *element) {
 	tdbloom_add(&tdbf, (uint8_t *)element, strlen(element));
 }
 
-/* tdbloom_lookup() - check if element exists within tdbloom
+/**
+ * @brief Check if an element exists in a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf    - time filter to perform lookup against
- *     element - element to search for
- *     len     - length of element to search (bytes)
+ * This function checks whether the given element exists in the
+ * time-decaying Bloom filter and whether it is still valid (i.e., has
+ * not expired based on the timeout settings).
  *
- * Returns:
- *     true if element is in filter
- *     false if element is not in filter
+ * @param tdbf Time-decaying Bloom filter to perform the lookup against.
+ * @param element Pointer to the element to search for in the filter.
+ * @param len Length of the element in bytes.
+ *
+ * @return true if the element is likely in the filter and valid
+ * @return false if it is definitely not in the filter or has expired.
  */
 bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
 	uint64_t    result;
@@ -331,40 +350,148 @@ bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
 	return true;
 }
 
-/* tdbloom_lookup_string() -- helper function to handle string lookups
+/**
+ * @brief Check if a string element exists in a time-decaying Bloom filter.
  *
- * Args:
- *     tdbf    - filter to use
- *     element - string element to lookup
+ * This function checks whether the given string element exists in the
+ * time-decaying Bloom filter and whether it is still valid (i.e., has
+ * not expired based on the timeout settings).
  *
- * Returns:
- *     true if element is likely in the filter
- *     false if element is definitely not in the filter
+ * @param tdbf Time-decaying Bloom filter to perform the lookup against.
+ * @param element Pointer to the string element to search for.
+ *
+ * @return true if the element is likely in the filter and valid
+ * @return false if it is definitely not in the filter or has expired.
  */
 bool tdbloom_lookup_string(const tdbloom tdbf, const char *element) {
 	return tdbloom_lookup(tdbf, (uint8_t *)element, strlen(element));
 }
 
+/**
+ * @brief Check if an element has expired in a time-decaying Bloom filter.
+ *
+ * This function checks whether the given element has expired in the
+ * time-decaying Bloom filter, meaning it was once present but its
+ * validity has elapsed.
+ *
+ * @param tdbf Time-decaying Bloom filter to check.
+ * @param element Pointer to the element to check for expiration.
+ * @param len Length of the element in bytes.
+ *
+ * @return true if the element has expired, false if the element is either still valid or never existed.
+ *
+ * TODO: test
+ */
+bool tdbloom_has_expired(const tdbloom tdbf, const void *element, size_t len) {
+	uint64_t result;
+	uint64_t hash[2];
+	time_t   now = get_monotonic_time();
+	size_t   ts  = ((now - tdbf.start_time) % tdbf.max_time + tdbf.max_time) % tdbf.max_time + 1;
 
-/* tdbloom_save() -- save a time-decaying bloom filter to disk
+	for (size_t i = 0; i < tdbf.hashcount; i++) {
+		mmh3_128(element, len, i, hash);
+		result = ((hash[0] % tdbf.size) + (hash[1] % tdbf.size)) % tdbf.size;
+
+		size_t value;
+		switch (tdbf.bytes) {
+		case 1: value = ((uint8_t *)tdbf.filter)[result];  break;
+		case 2: value = ((uint16_t *)tdbf.filter)[result]; break;
+		case 4: value = ((uint32_t *)tdbf.filter)[result]; break;
+		case 8: value = ((uint64_t *)tdbf.filter)[result]; break;
+		}
+
+		if (value != 0 && ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+			return true; // element has expired
+		}
+	}
+
+	return false; // element has not expired
+}
+
+/**
+ * @brief Check if a string element has expired in a time-decaying Bloom filter.
  *
- * Format of these files on disk is:
- *    +------------------+
- *    |  tdbloom struct  |
- *    +------------------+
- *    |      bitmap      |
- *    +------------------+
+ * This function checks whether a given string element has expired in
+ * the time-decaying Bloom filter, meaning it was once present but its
+ * validity has elapsed.
  *
- * Args:
- *     tdbf - filter to save
- *     path - file path to save filter
+ * @param tdbf Time-decaying Bloom filter to check.
+ * @param element Pointer to the string element to check for expiration.
  *
- * Returns:
- *      TDBF_SUCCESS on success
- *      TDBF_FOPEN if unable to open file for writing
- *      TDBF_FWRITE if unable to write to file
+ * @return true if the element has expired.
+ * @return false if the element is either still valid or never existed.
  *
- * TODO: test tdbloom_save()
+ * TODO: test
+ */
+bool tdbloom_has_expired_string(const tdbloom tdbf, const char *element) {
+	return tdbloom_has_expired(tdbf, element, strlen(element));
+}
+
+/**
+ * @brief Check if an element has expired in a time-decaying Bloom
+ * filter and reset it if has expired.
+ *
+ * This function checks whether the given element has expired in the
+ * time-decaying Bloom filter. If the element has expired, it is reset
+ * by updating its timestamp and counter to make it valid again.
+ *
+ * @param tdbf Pointer to the time-decaying Bloom filter.
+ * @param element Pointer to the element to check and possibly reset.
+ * @param len Length of the element in bytes.
+ *
+ * @return true if the element was expired and reset.
+ * @return false if the element was still valid or did not exist.
+ *
+ * TODO: test
+ */
+bool tdbloom_reset_if_expired(tdbloom *tdbf, const void *element, size_t len) {
+	if (tdbloom_has_expired(*tdbf, element, len)) {
+		tdbloom_add(tdbf, element, len);
+		return true; // element was expired and has been reset
+	}
+
+	return false; // element still valid or never existed.
+}
+
+/**
+ * @brief Check if a string element has expired in a time-decaying
+ * Bloom filter and reset it if has expired.
+ *
+ * This function checks whether a given string element has expired in
+ * the time-decaying Bloom filter. If the element has expired, it is
+ * reset by updating its timestamp and counter to make it valid again.
+ *
+ * @param tdbf Pointer to the time-decaying Bloom filter.
+ * @param element Pointer to the string element to check and possibly reset.
+ *
+ * @return true if the element was expired and reset.
+ * @return false if the element was still valid or did not exist.
+ *
+ * TODO: test
+ */
+bool tdbloom_reset_if_expired_string(tdbloom *tdbf, const char *element) {
+	return tdbloom_reset_if_expired(tdbf, element, strlen(element));
+}
+
+/**
+ * @brief Save a time-decaying Bloom filter to disk.
+ *
+ * This function saves the current state of a time-decaying Bloom
+ * filter to a file on disk.  The file contains the structure of the
+ * Bloom filter followed by the filter's bitmap.
+ *
+ * The file format is as follows:
+ * - First, the `tdbloom` struct is saved.
+ * - Then, the bitmap of the Bloom filter is saved.
+ *
+ * @param tdbf Time-decaying Bloom filter to save.
+ * @param path File path where the Bloom filter will be saved.
+ *
+ * @return TDBF_SUCCESS on success.
+ * @return TDBF_FOPEN if the file could not be opened for writing.
+ * @return TDBF_FWRITE if there was an error writing to the file.
+ *
+ * TODO: test
  */
 tdbloom_error_t tdbloom_save(tdbloom tdbf, const char *path) {
 	FILE *fp;
@@ -385,21 +512,23 @@ tdbloom_error_t tdbloom_save(tdbloom tdbf, const char *path) {
 	return TDBF_SUCCESS;
 }
 
-/* tdbloom_load() -- load a time-decaying bloom filter from disk
+/**
+ * @brief Load a time-decaying Bloom filter from a file on disk.
  *
- * Args:
- *     tdbf - tdbloom struct of new filter
- *     path - location of filter on disk
+ * This function reads a time-decaying Bloom filter from the specified
+ * file and initializes the filter structure with the saved data.
  *
- * Returns:
- *     TDBF_SUCCESS on success
- *     TDBF_FOPEN if unable to open file
- *     TDBF_FREAD if unable to read file
- *     TDBF_FSTAT if fstat() fails
- *     TDBF_INVALIDFILE if file format is incorrect
- *     TDBF_OUTOFMEMORY if memory allocation failed
+ * @param tdbf Pointer to the `tdbloom` struct to initialize.
+ * @param path File path from which to load the Bloom filter.
  *
- * TODO: test tdbloom_save()
+ * @return TDBF_SUCCESS on success.
+ * @return TDBF_FOPEN if the file could not be opened.
+ * @return TDBF_FREAD if there was an error reading from the file.
+ * @return TDBF_FSTAT if the fstat() system call fails.
+ * @return TDBF_INVALIDFILE if the file format is incorrect.
+ * @return TDBF_OUTOFMEMORY if memory allocation fails.
+ *
+ * TODO: test
  */
 tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
 	FILE        *fp;
@@ -445,16 +574,19 @@ tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
 	return TDBF_SUCCESS;
 }
 
-/* tdbloom_strerror() -- returns string containing error message
+/**
+ * @brief Return a string containing the error message for a given error code.
  *
- * Args:
- *     error - error number returned from function
+ * This function converts an error code returned by a time-decaying
+ * Bloom filter function into a human-readable error message.
  *
- * Returns:
- *     "Unknown error" if 'error' is out of range. Otherwise, a pointer to
- *     a string containing relevant error message.
+ * @param error The error code returned by a time-decaying Bloom
+ * filter function.
  *
- * TODO test
+ * @return A pointer to a string containing the relevant error
+ * message, or "Unknown error" if the error code is out of range.
+ *
+ * TODO: test
  */
 const char *tdbloom_strerror(tdbloom_error_t error) {
 	if (error < 0 || error >= TDBF_ERRORCOUNT) {
