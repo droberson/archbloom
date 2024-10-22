@@ -280,6 +280,7 @@ bool cuckoo_load(cuckoofilter *cf, const char *path) {
 	cfb.bucket_insertions = (size_t *)calloc(cf->num_buckets, sizeof(size_t));
 	if (cf->bucket_insertions == NULL) {
 		free(cf->buckets);
+		cf->buckets = NULL;
 		fclose(fp);
 		return false;
 	}
@@ -288,7 +289,9 @@ bool cuckoo_load(cuckoofilter *cf, const char *path) {
 	if (fread(cf->buckets, sizeof(cuckoobucket), cf->num_buckets * cf->bucket_size, fp) != (cf->num_buckets * cf->bucket_size) ||
 		fread(cf->bucket_insertions, sizeof(size_t), cf->num_buckets, fp) != cf->num_buckets) {
 		free(cf->buckets);
+		cf->buckets = NULL;
 		free(cf->bucket_insertions);
+		cf->bucket_insertions = NULL;
 		fclose(fp);
 		return false;
 	}

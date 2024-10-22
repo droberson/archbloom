@@ -386,6 +386,7 @@ cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 	if (fread(cbf, sizeof(cbloomfilter), 1, fp) != 1) {
 		fclose(fp);
 		free(cbf->countermap);
+		cbf->countermap = NULL;
 		return CBF_FREAD;
 	}
 

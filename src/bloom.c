@@ -270,6 +270,7 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	if (fread(bf->bitmap, bf->bitmap_size, 1, fp) != 1) {
 		fclose(fp);
 		free(bf->bitmap);
+		bf->bitmap = NULL;
 		return BF_FREAD;
 	}
 

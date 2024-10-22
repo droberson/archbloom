@@ -430,6 +430,7 @@ tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
 
 	if (fread(tdbf->filter, tdbf->filter_size, 1, fp) != 1) {
 		free(tdbf->filter);
+		tdbf->filter = NULL;
 		fclose(fp);
 		return TDBF_FREAD;
 	}
