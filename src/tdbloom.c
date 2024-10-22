@@ -13,15 +13,20 @@
 #include "tdbloom.h"
 #include "mmh3.h"
 
-/* ideal_size() - calculate ideal size of a filter based on the expected
- *                number of elements and desired accuracy.
+/**
+ * @brief Calculate the ideal size of a Bloom filter's bit array.
  *
- * Args:
- *     expected - maximum expected number of elements
- *     accuracy - margin of error. ex: use 0.01 if you want 99.99% accuracy
+ * This function calculates the optimal size of a Bloom filter's bit array
+ * based on the expected number of elements that it will contain and the
+ * desired accuracy. This ensures a good balance of memory usage and acceptable
+ * rate of false positive results
  *
- * Returns:
- *     unsigned integer
+ * @param expected Maximum expected number of elements to store in the filter.
+ * @param accuracy The desired rate of false positives (eg 0,01 for 99.99% accuracy).
+ *
+ * @return The optimal size of the filter based on given inputs.
+ *
+ * @note This function is static and intended for internal use.
  */
 static uint64_t ideal_size(const uint64_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
