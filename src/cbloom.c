@@ -1,4 +1,12 @@
-/* cbloom.c
+/**
+ * @file cbloom.c
+ * @brief Implementation of a counting Bloom filter.
+ *
+ * This file contains the implementation of a counting Bloom filter,
+ * which allows for approximate membership checks and supports element
+ * addition and removal using counters. It includes functions for
+ * initializing, adding elements, checking membership, removing
+ * elements, and saving/loading the filter to/from disk.
  */
 #include <string.h>
 #include <stdint.h>
