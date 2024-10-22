@@ -86,6 +86,21 @@ double bloom_capacity(bloomfilter bf) {
 	return ((double)bf.insertions / (double)bf.expected) * 100.0;
 }
 
+/* calculate_positions() - helper function to get bit positions
+ *
+ * Args:
+ *     result -
+ *     byte_position - pointer to store byte position
+ *     bit_position  - pointer to store bit positoin
+ *
+ * Returns:
+ *     Nothing
+ */
+static inline void calculate_positions(uint64_t result, uint64_t *byte_position, uint8_t *bit_position) {
+	*byte_position = result / 8;
+	*bit_position = result % 8;
+}
+
 /* bloom_lookup() - check if an element is likely in a filter
  *
  * Args:
@@ -108,8 +123,7 @@ bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
 		// TODO will result ever equal bf.size?
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
-		byte_position = result / 8;
-		bit_position = result % 8;
+		calculate_positions(result, &byte_position, &bit_position);
 
 		if ((bf.bitmap[byte_position] & (0x01 << bit_position)) == 0) {
 			return false;
@@ -147,15 +161,14 @@ void bloom_add(bloomfilter *bf, void *element, const size_t len) {
 	uint64_t  hash[2];
 	uint64_t  result;
 	uint64_t  byte_position;
-	uint64_t  bit_position;
+	uint8_t   bit_position;
 	bool      all_bits_set = true;
 
 	for (int i = 0; i < bf->hashcount; i++) {
 		mmh3_128(element, len, i, hash);
 		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
 
-		byte_position = result / 8;
-		bit_position  = result % 8;
+		calculate_positions(result, &byte_position, &bit_position);
 
 		if ((bf->bitmap[byte_position] & (0x01 << bit_position)) == 0) {
 			all_bits_set = false;
