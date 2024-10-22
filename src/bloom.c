@@ -188,7 +188,7 @@ bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
 	uint64_t byte_position;
 	uint8_t  bit_position;
 
-	for (int i = 0; i < bf.hashcount; i++) {
+	for (size_t i = 0; i < bf.hashcount; i++) {
 		mmh3_128(element, len, i, hash);
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
@@ -233,7 +233,7 @@ void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
 	uint8_t   bit_position;
 	bool      all_bits_set = true;
 
-	for (int i = 0; i < bf->hashcount; i++) {
+	for (size_t i = 0; i < bf->hashcount; i++) {
 		mmh3_128(element, len, i, hash);
 		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
 
@@ -262,6 +262,63 @@ void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
  */
 void bloom_add_string(bloomfilter *bf, const char *element) {
 	bloom_add(bf, (uint8_t *)element, strlen(element));
+}
+
+/* bloom_lookup_or_add() - check if an element exists, adding it it doesn't
+ *
+ * Args:
+ *     bf      - filter to perform lookup/add on
+ *     element - element to lookup/add
+ *     len     - length of element
+ *
+ * Returns:
+ *     true if element is already in filter
+ *     false if element was added to the filter
+ *
+ * TODO: test
+ */
+bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len) {
+	uint64_t hash[2];
+	size_t   result;
+	uint64_t byte_position;
+	uint8_t  bit_position;
+	bool     found_all = true;
+
+	for (size_t i = 0; i < bf->hashcount; i++) {
+		mmh3_128(element, len, i, hash);
+		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
+
+		calculate_positions(result, &byte_position, &bit_position);
+
+		if ((bf->bitmap[byte_position] & (0x01 << bit_position)) == 0) {
+			found_all = false;
+			bf->bitmap[byte_position] |= (0x01 << bit_position);
+		}
+	}
+
+	if (found_all == false) {
+		bf->insertions += 1;
+		return false; // element has been added to filter
+	}
+
+	return true; // element was already in filter
+}
+
+/* bloom_lookup_or_add_string() - helper function for bloom_lookup_or_add to
+ *                                handle adding strings easier.
+ *
+ * Args:
+ *     bf      - filter to lookup/add
+ *     element - string element to add
+ *
+ * Returns:
+ *     true if element was already in filter
+ *     false if element was added to filter
+ *
+ * TODO: test
+ */
+bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
+	return bloom_lookup_or_add(bf, element, strlen(element));
 }
 
 /* bloom_save() - save a bloom filter to disk
