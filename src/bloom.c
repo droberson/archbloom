@@ -1,4 +1,11 @@
-/* bloom.c
+/**
+ * @file bloom.c
+ * @brief Bloom filter implementation.
+ *
+ * This file contains functions for working with Bloom filters,
+ * including initialization, destruction, insertion, querying, and
+ * saving and loading filters from disk.
+ *
  * TODO: name filters
  */
 #include <stdlib.h>
@@ -13,29 +20,37 @@
 #include "mmh3.h"
 #include "bloom.h"
 
-/* ideal_size() - calculate ideal size of a filter
+/**
+ * @brief Calculate the ideal size of a Bloom filter's bit array.
  *
- * Args:
- *     expected - maximum expected number of elements
- *     accuracy - margin of error. ex: use 0.01 if you want 99.99% accuracy
+ * This function calculates the optimal size of a Bloom filter's bit array
+ * based on the expected number of elements that it will contain and the
+ * desired accuracy. This ensures a good balance of memory usage and acceptable
+ * rate of false positive results
  *
- * Returns:
- *     unsigned integer
+ * @param expected Maximum expected number of elements to store in the filter.
+ * @param  accuracy The desired rate of false positives (eg 0,01 for 99.99% accuracy)
+ *
+ * @return The optimal size of the filter, in bits.
+ *
+ * @note This function is static and intended for internal use.
  */
 static size_t ideal_size(const size_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
 }
 
-/* bloom_init() - initialize a bloom filter
+/**
+ * @brief Initialize a Bloom filter
  *
- * Args:
- *     bf       - bloomfilter structure
- *     expected - expected number of elements
- *     accuracy - margin of acceptable error. ex: 0.01 is "99.99%" accurate
+ * This function initializes a Bloom filter based on the expected number of
+ * elements it will contain and the desired accuracy.
  *
- * Returns:
- *     BF_SUCCESS on success
- *     BF_OUTOFMEMORY if memory allocation failed
+ * @param bf       Pointer to a bloomfilter structure.
+ * @param expected Expected number of elements the filter will contain.
+ * @param accuracy Margin of acceptable error. ex: 0.01 is "99.99%" accurate.
+ *
+ * @return BF_SUCCESS on successful initialization.
+ * @return BF_OUTOFMEMORY if memory allocation fails.
  *
  * TODO: test
  */
@@ -55,13 +70,12 @@ bloom_error_t bloom_init(bloomfilter *bf, const size_t expected, const float acc
 	return BF_SUCCESS;
 }
 
-/* bloom_destroy() - free a bloom filter's allocated memory
+/**
+ * @brief Free the memory allocated for a Bloom filter.
  *
- * Args:
- *     bf - filter to free
+ * This function frees memory associated with a the given Bloom filter.
  *
- * Returns:
- *     Nothing
+ * @param bf Pointer to the Bloom filter to free.
  */
 void bloom_destroy(bloomfilter *bf) {
 	if (bf->bitmap) {
@@ -70,14 +84,13 @@ void bloom_destroy(bloomfilter *bf) {
 	}
 }
 
-/* bloom_clear() - clear the contents of a bloom filter and reset insertion
- *                 counter to zero.
+/**
+ * @brief Clear the contents of a Bloom filter and it's insertion counter.
  *
- * Args:
- *     bf - filter to clear
+ * This function empties the Bloom filter and resets the counter that
+ * tracks the number of insertions performed on the filter.
  *
- * Returns:
- *     Nothing
+ * @param bf Pointer to the Bloom filter to clear.
  *
  * TODO: test
  */
@@ -86,14 +99,6 @@ void bloom_clear(bloomfilter *bf) {
 	bf->insertions = 0;
 }
 
-/* bloom_saturation_count() - calculate number of bits set to 1 in bloom filter
- *
- * Args:
- *     bf - filter to count
- *
- * Returns:
- *     number of bits set to 1 in filter
- */
 // lookup table for bloom_saturation() and bloom_saturation_count()
 static const uint8_t bit_count_table[256] = {
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -114,7 +119,18 @@ static const uint8_t bit_count_table[256] = {
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-// TODO: test
+/**
+ * @brief Calculate the number of bits set to 1 in a Bloom filter.
+ *
+ * This function counts the number of bits set to 1 in a Bloom
+ * filter. This calculation is useful for determining how full the
+ * filter is.
+ *
+ * @param bf Bloom filter to count.
+ *
+ * @return The number of bits set to 1 in the provided Bloom filter.
+ * TODO: test
+ */
 size_t bloom_saturation_count(const bloomfilter bf) {
 	size_t count = 0;
 
@@ -125,13 +141,17 @@ size_t bloom_saturation_count(const bloomfilter bf) {
 	return count;
 }
 
-/* bloom_saturation() - calculate saturation (percentage of bits set in filter)
+/**
+ * @brief Calculate the saturation of a Bloom filter (the percentage
+ * of bits set).
  *
- * Args:
- *     bf - filter to calculate saturation of
+ * This function computes the percentage of bits set to 1 in a
+ * provided Bloom filter, which gives an estimate of how full a filter
+ * is.
  *
- * Returns:
- *     percentage of bits set in filter
+ * @param bf Bloom filter to calculate saturation for.
+ *
+ * @return The percentage of bits set in filter as a floating-point value.
  *
  * TODO: test
  */
@@ -142,45 +162,51 @@ float bloom_saturation(const bloomfilter bf) {
 	return (float)set_bits / total_bits * 100.0;
 }
 
-/* bloom_capacity() - returns the capacity of a bloom filter as a percentage
- *                    based on number of insertions and the expected number of
- *                    elements within the filter.
+/**
+ * @brief Calculate the capacity of a bloom filter as a percentage
+ * based on the expected number of elements and number of insertions.
  *
- * Args:
- *     bf - filter to check capacity
+ * This function returns the used capacity of the Bloom filter based
+ * on the number of insertions and expected number of elements,
+ * expressed as a percentage.
  *
- * Returns:
- *     a double representing the capacity of the bloom filter
+ * @param bf Bloom filter to check capacity of.
+ *
+ * @return A double representing the used capacity of the bloom filter.
+ *
+ * TODO: is this function worthwhile? seems like saturation is a better measure
  */
 double bloom_capacity(const bloomfilter bf) {
 	return ((double)bf.insertions / (double)bf.expected) * 100.0;
 }
 
-/* calculate_positions() - helper function to get bit positions
+/**
+ * @brief Helper function to get byte and bit positions of elements in
+ * a Bloom filter.
  *
- * Args:
- *     result -
- *     byte_position - pointer to store byte position
- *     bit_position  - pointer to store bit positoin
+ * @param result Position of element.
+ * @param byte_position Pointer to store calculated byte position.
+ * @param bit_position Pointer to store bit calculated bit position.
  *
- * Returns:
- *     Nothing
+ * TODO: rename 'result' parameter?
  */
-static inline void calculate_positions(uint64_t result, uint64_t *byte_position, uint8_t *bit_position) {
-	*byte_position = result / 8;
-	*bit_position = result % 8;
+static inline void calculate_positions(uint64_t position, uint64_t *byte_position, uint8_t *bit_position) {
+	*byte_position = position / 8;
+	*bit_position = position % 8;
 }
 
-/* bloom_lookup() - check if an element is likely in a filter
+/**
+ * @brief Check if an element is likely present in a Bloom filter.
  *
- * Args:
- *     bf      - filter to use
- *     element - element to lookup
- *     len     - element length in bytes
+ * This function determined whether or not an element is probably in
+ * the filter or definitely not in the filter.
  *
- * Returns:
- *     true if element is probably in filter
- *     false if element is definitely not in filter
+ * @param bf Bloom filter to perform look up against.
+ * @param element Pointer to the element to look up.
+ * @param len Length of the element in bytes.
+ *
+ * @return true if the element is probably in the filter.
+ * @return false if the element is definitely not in the filter.
  */
 bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
 	uint64_t hash[2];
@@ -202,29 +228,30 @@ bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
 	return true;
 }
 
-/* bloom_lookup_string() - helper function for bloom_lookup() to handle strings
+/**
+ * @brief Helper function for bloom_lookup() to handle string elements.
  *
- * Args:
- *     bf      - filter to use
- *     element - element to lookup
+ * This function is a convenience wrapper for `bloom_lookup()` specifically
+ * for handling string elements.
  *
- * Returns
- *     true if element is likely in the filter
- *     false if element is definitely not in the filter
+ * @param bf Bloom filter to perform look up against.
+ * @param element Pointer to the string element to look up.
+ *
+ * @return true if the string is likely in the filter.
+ * @return false if the element is definitely not in the filter.
  */
 bool bloom_lookup_string(const bloomfilter bf, const char *element) {
 	return bloom_lookup(bf, (uint8_t *)element, strlen(element));
 }
 
-/* bloom_add() - add/insert an element into a bloom filter
+/**
+ * @brief Add or insert an element into a Bloom filter.
  *
- * Args:
- *     bf      - filter to use
- *     element - element to add
- *     len     - element length in bytes
+ * This function inserts an element into a Bloom filter.
  *
- * Returns:
- *     Nothing
+ * @param bf Bloom filter to add element to.
+ * @param element Pointer to element to add.
+ * @param len Length of element in bytes.
  */
 void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
 	uint64_t  hash[2];
@@ -251,29 +278,29 @@ void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
 	}
 }
 
-/* bloom_add_string() - helper function for bloom_add() to handle strings
+/**
+ * @brief Helper function for `bloom_add()` to handle string elements.
  *
- * Args:
- *     bf      - filter to use
- *     element - element to add to filter
+ * This function is a convenience wrapper around `bloom_add()`
+ * specifically for adding string elements to a Bloom filter.
  *
- * Returns:
- *     Nothing
+ * @param bf Bloom filter to add a string element to.
+ * @param element Pointer to the string element to add to the filter.
  */
 void bloom_add_string(bloomfilter *bf, const char *element) {
 	bloom_add(bf, (uint8_t *)element, strlen(element));
 }
 
-/* bloom_lookup_or_add() - check if an element exists, adding it it doesn't
+/**
+ * @brief Check if an element exists in a Bloom filter, adding it if
+ * it does not exist.
  *
- * Args:
- *     bf      - filter to perform lookup/add on
- *     element - element to lookup/add
- *     len     - length of element
+ * @param bf Pointer to the Bloom filter to perform look up or add.
+ * @param element Pointer to the element to look up or add.
+ * @param len Length of the element in bytes
  *
- * Returns:
- *     true if element is already in filter
- *     false if element was added to the filter
+ * @return true if the element is already in the filter.
+ * @return false if the element was added to the filter
  *
  * TODO: test
  */
@@ -304,16 +331,18 @@ bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len)
 	return true; // element was already in filter
 }
 
-/* bloom_lookup_or_add_string() - helper function for bloom_lookup_or_add to
- *                                handle adding strings easier.
+/**
+ * @brief Helper function for bloom_lookup_or_add() to handle string elements.
  *
- * Args:
- *     bf      - filter to lookup/add
- *     element - string element to add
+ * This function is a convenience wrapper around
+ * `bloom_lookup_or_add()` that makes it easier to work with string
+ * elements.
  *
- * Returns:
- *     true if element was already in filter
- *     false if element was added to filter
+ * @param bf Pointer to the Bloom filter to perform this operation against..
+ * @param element Pointer to the string element to check or add.
+ *
+ * @return true if the string was already in the filter.
+ * @return false if the string was newly added.
  *
  * TODO: test
  */
@@ -321,23 +350,21 @@ bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
 	return bloom_lookup_or_add(bf, element, strlen(element));
 }
 
-/* bloom_save() - save a bloom filter to disk
+/**
+ * @brief Saves a Bloom filter to disk.
  *
- * Format of these files on disk is:
- *    +---------------------+
- *    | bloom filter struct |
- *    +---------------------+
- *    |        bitmap       |
- *    +---------------------+
+ * This function saves the Bloom filter to a file on disk. The file
+ * contains two sections:
  *
- * Args:
- *     bf   - filter to save
- *     path - file path to save filter
+ * 1. The Bloom filter structure.
+ * 2. The bitmap data.
  *
- * Returns:
- *      BF_SUCCESS on success
- *      BF_FOPEN if unable to open file
- *      BF_FWRITE if unable to write to file
+ * @param bf Bloom filter to save to disk.
+ * @param path File path where the Bloom filter will be saved.
+ *
+ * @return BF_SUCCESS on success.
+ * @return BF_FOPEN if unable to open the file.
+ * @return BF_FWRITE if unable to write to the file.
  *
  * TODO: test
  */
@@ -359,19 +386,21 @@ bloom_error_t bloom_save(const bloomfilter bf, const char *path) {
 	return BF_SUCCESS;
 }
 
-/* bloom_load() - load a bloom filter from disk
+/**
+ * @brief Load a Bloom filter from a file on disk.
  *
- * Args:
- *     bf   - bloom filter object of new filter
- *     path - location of filter on disk
+ * This function reads a Bloom filter from the specified file and
+ * initializes the Bloom filter object.
  *
- * Returns:
- *     BF_SUCCESS on success
- *     BF_FOPEN if unable to open file
- *     BF_FREAD if unable to read file
- *     BF_FSTAT if fstat() fails
- *     BF_INVALIDFILE if file is invalid
- *     BF_OUTOFMEMORY if memory allocation fails
+ * @param bf Pointer to the Bloom filter object to initialize.
+ * @param path File path from which to load the Bloom filter.
+ *
+ * @return BF_SUCCESS on success.
+ * @return BF_FOPEN if unable to open the file.
+ * @return BF_FREAD if unable to read the file.
+ * @return BF_FSTAT if fstat() fails.
+ * @return BF_INVALIDFILE if the file is invalid.
+ * @return BF_OUTOFMEMORY if memory allocation fails.
  *
  * TODO: test various edge cases
  */
@@ -419,14 +448,17 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	return BF_SUCCESS;
 }
 
-/* bloom_strerror() - returns string containing error message
+/**
+ * @brief Return a string containing the error message corresponding
+ * to an error code.
  *
- * Args:
- *     error - error number returned from function
+ * This function converts an error code returned by a Bloom filter
+ * function into a human-readable error message.
  *
- * Returns:
- *     "Unknown error" if 'error' is out of range.
- *     Otherwise, a pointer to a string containing relevant error message.
+ * @param error The error code returned by a Bloom filter function.
+ *
+ * @return A pointer to a string containing the relevant error
+ * message, or "Unknown error" if the error code is out of range.
  *
  * TODO test
  */
