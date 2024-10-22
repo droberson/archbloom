@@ -82,7 +82,7 @@ void bloom_destroy(bloomfilter *bf) {
  * Returns:
  *     a double representing the capacity of the bloom filter
  */
-double bloom_capacity(bloomfilter bf) {
+double bloom_capacity(const bloomfilter bf) {
 	return ((double)bf.insertions / (double)bf.expected) * 100.0;
 }
 
@@ -112,7 +112,7 @@ static inline void calculate_positions(uint64_t result, uint64_t *byte_position,
  *     true if element is probably in filter
  *     false if element is definitely not in filter
  */
-bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
+bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
 	uint64_t hash[2];
 	uint64_t result;
 	uint64_t byte_position;
@@ -157,7 +157,7 @@ bool bloom_lookup_string(const bloomfilter bf, const char *element) {
  * Returns:
  *     Nothing
  */
-void bloom_add(bloomfilter *bf, void *element, const size_t len) {
+void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
 	uint64_t  hash[2];
 	uint64_t  result;
 	uint64_t  byte_position;
@@ -215,7 +215,7 @@ void bloom_add_string(bloomfilter *bf, const char *element) {
  *
  * TODO: test
  */
-bloom_error_t bloom_save(bloomfilter bf, const char *path) {
+bloom_error_t bloom_save(const bloomfilter bf, const char *path) {
 	FILE *fp;
 
 	fp = fopen(path, "wb");

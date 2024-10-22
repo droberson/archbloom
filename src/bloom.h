@@ -57,13 +57,13 @@ typedef struct {
  */
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
 void           bloom_destroy(bloomfilter *);
-double         bloom_capacity(bloomfilter);
-bool           bloom_lookup(const bloomfilter, void *, const size_t);
+double         bloom_capacity(const bloomfilter);
+bool           bloom_lookup(const bloomfilter, const void *, const size_t);
 bool           bloom_lookup_string(const bloomfilter, const char *);
-void           bloom_add(bloomfilter *, void *, const size_t);
+void           bloom_add(bloomfilter *, const void *, const size_t);
 void           bloom_add_string(bloomfilter *, const char *);
-bloom_error_t  bloom_save(bloomfilter, const char *);
+bloom_error_t  bloom_save(const bloomfilter, const char *);
 bloom_error_t  bloom_load(bloomfilter *, const char *);
-const char    *bloom_strerror(bloom_error_t);
+const char    *bloom_strerror(const bloom_error_t);
 
 #endif /* BLOOM_H */
