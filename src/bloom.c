@@ -100,17 +100,18 @@ double bloom_capacity(bloomfilter bf) {
 bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
 	uint64_t hash[2];
 	uint64_t result;
-	uint64_t bytepos;
-	uint8_t  bitpos;
+	uint64_t byte_position;
+	uint8_t  bit_position;
 
 	for (int i = 0; i < bf.hashcount; i++) {
 		mmh3_128(element, len, i, hash);
+		// TODO will result ever equal bf.size?
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
-		bytepos = result / 8;
-		bitpos = result % 8;
+		byte_position = result / 8;
+		bit_positionpos = result % 8;
 
-		if ((bf.bitmap[bytepos] & (0x01 << bitpos)) == 0) {
+		if ((bf.bitmap[byte_position] & (0x01 << bit_position)) == 0) {
 			return false;
 		}
 	}
