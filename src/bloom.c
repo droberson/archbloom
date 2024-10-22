@@ -72,6 +72,21 @@ void bloom_destroy(bloomfilter *bf) {
 	}
 }
 
+/* bloom_clear - clear the contents of a bloom filter and reset insertion count
+ *
+ * Args:
+ *     bf - filter to clear
+ *
+ * Returns:
+ *     Nothing
+ *
+ * TODO: test
+ */
+void bloom_clear(bloomfilter *bf) {
+	memset(bf->bitmap, 0, bf->bitmap_size);
+	bf->insertions = 0;
+}
+
 /* bloom_capacity() - returns the capacity of a bloom filter as a percentage
  *                    based on number of insertions and the expected number of
  *                    elements within the filter.
@@ -120,7 +135,6 @@ bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
 
 	for (int i = 0; i < bf.hashcount; i++) {
 		mmh3_128(element, len, i, hash);
-		// TODO will result ever equal bf.size?
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
 		calculate_positions(result, &byte_position, &bit_position);
