@@ -109,7 +109,7 @@ bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
 		byte_position = result / 8;
-		bit_positionpos = result % 8;
+		bit_position = result % 8;
 
 		if ((bf.bitmap[byte_position] & (0x01 << bit_position)) == 0) {
 			return false;
