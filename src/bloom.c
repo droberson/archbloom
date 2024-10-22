@@ -29,9 +29,9 @@
  * rate of false positive results
  *
  * @param expected Maximum expected number of elements to store in the filter.
- * @param  accuracy The desired rate of false positives (eg 0,01 for 99.99% accuracy)
+ * @param accuracy The desired rate of false positives (eg 0,01 for 99.99% accuracy).
  *
- * @return The optimal size of the filter, in bits.
+ * @return The optimal size of the filter based on given inputs.
  *
  * @note This function is static and intended for internal use.
  */
