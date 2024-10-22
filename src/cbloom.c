@@ -1,6 +1,4 @@
 /* cbloom.c
- * TODO: clear/reset function
- * TODO: calculate saturation
  */
 #include <string.h>
 #include <stdint.h>
@@ -316,6 +314,60 @@ void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
  */
 void cbloom_remove_string(cbloomfilter cbf, const char *element) {
 	cbloom_remove(cbf, (uint8_t *)element, strlen(element));
+}
+
+/**
+ * @brief Count the number of set items in a counting Bloom filter.
+ *
+ * This function counts how many items in the filter have been
+ * set. This is useful for determining how full the filter is.
+ *
+ * @param cbf Counting Bloom filter to count.
+ *
+ * TODO: test
+ */
+size_t cbloom_saturation_count(const cbloomfilter cbf) {
+	size_t count = 0;
+
+	for (size_t i = 0; i < cbf.size; i++) {
+		if (get_counter(&cbf, i) != 0) {
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/**
+ * @brief Calculate the saturation of a counting Bloom filter (the
+ * percentage of counters set).
+ *
+ * This function computes the percentage of counters set to values
+ * greater than 1 in the provided counting Bloom filter. This value
+ * indicates how full the filter is as a percentage.
+ *
+ * @param cbf Counting Bloom filter to calculate saturation of.
+ *
+ * @return The percentage of counters set as a floating-point value.
+ *
+ * TODO: test
+ */
+float cbloom_saturation(const cbloomfilter cbf) {
+	return (float)cbloom_saturation_count(cbf) / cbf.size * 100.0;
+}
+
+/**
+ * @brief Clear the contents of a counting Bloom filter.
+ *
+ * This function empties the counting Bloom filter, resetting all
+ * counters to zero.
+ *
+ * @param cbf Pointer to counting Bloom filter to clear.
+ *
+ * TODO: test
+ */
+void cbloom_clear(cbloomfilter *cbf) {
+	memset(cbf->countermap, 0, cbf->countermap_size);
 }
 
 /* cbloom_save() -- save a counting bloom filter to disk
