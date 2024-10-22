@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* cbloom_error_t -- error status type. used for mapping function return values
- *                   to error statuses.
+/* cbloom_error_t - error status type. used for mapping function return values
+ *                  to error messages.
  */
 typedef enum {
 	CBF_SUCCESS = 0,
@@ -33,10 +33,10 @@ const char *cbloom_errors[] = {
 	"Invalid file format"
 };
 
-/* counter_size -- used for setting appropriately-sized counters, which can
-                   result in a reduced memory footprint if smaller counts are
-				   expected.
-*/
+/* counter_size - used for setting appropriately-sized counters, which can
+ *                result in a reduced memory footprint if smaller counts are
+ *                expected.
+ */
 typedef enum {
 	COUNTER_8BIT,
 	COUNTER_16BIT,
@@ -44,7 +44,7 @@ typedef enum {
 	COUNTER_64BIT
 } counter_size;
 
-/* cbloomfilter -- structure for a counting bloom filter
+/* cbloomfilter - structure for a counting bloom filter
  */
 typedef struct {
 	uint64_t      size;              /* size of counting bloom filter */
