@@ -1,4 +1,13 @@
-/* tdbloom.c
+/**
+ * @file tdbloom.c
+ * @brief Implementation of a time-decaying Bloom filter.
+ *
+ * This file contains the implementation of a time-decaying Bloom
+ * filter, which allows for approximate membership checks where
+ * elements naturally expire after a set timeout period It includes
+ * functions for initializing the filter, adding elements, checking
+ * membership, removing expired elements, and saving/loading the
+ * filter to/from disk.
  */
 #include <time.h>
 #include <math.h>
