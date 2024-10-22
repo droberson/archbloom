@@ -1,4 +1,7 @@
 /* bloom.c
+ * TODO: clear filter
+ * TODO: filter saturation
+ * TODO: name filters
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,7 +28,7 @@ static size_t ideal_size(const size_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
 }
 
-/* bloom_init() -- initialize a bloom filter
+/* bloom_init() - initialize a bloom filter
  *
  * Args:
  *     bf       - bloomfilter structure
@@ -33,25 +36,28 @@ static size_t ideal_size(const size_t expected, const float accuracy) {
  *     accuracy - margin of acceptable error. ex: 0.01 is "99.99%" accurate
  *
  * Returns:
- *     true on success, false on failure
+ *     BF_SUCCESS on success
+ *     BF_OUTOFMEMORY if memory allocation failed
+ *
+ * TODO: test
  */
-bool bloom_init(bloomfilter *bf, const size_t expected, const float accuracy) {
+bloom_error_t bloom_init(bloomfilter *bf, const size_t expected, const float accuracy) {
 	bf->size        = ideal_size(expected, accuracy);
 	bf->hashcount   = (bf->size / expected) * log(2);
-	bf->bitmap_size = ceil(bf->size / 8);
+	bf->bitmap_size = bf->size / 8;
 	bf->expected    = expected;
 	bf->accuracy    = accuracy;
 	bf->insertions  = 0;
 
 	bf->bitmap      = calloc(bf->bitmap_size, sizeof(uint8_t));
 	if (bf->bitmap == NULL) {
-		return false;
+		return BF_OUTOFMEMORY;
 	}
 
-	return true;
+	return BF_SUCCESS;
 }
 
-/* bloom_destroy() -- free a bloom filter's allocated memory
+/* bloom_destroy() - free a bloom filter's allocated memory
  *
  * Args:
  *     bf - filter to free
@@ -66,19 +72,21 @@ void bloom_destroy(bloomfilter *bf) {
 	}
 }
 
-/* bloom_capacity() -- returns the occupancy of a bloom filter as a percentage
+/* bloom_capacity() - returns the capacity of a bloom filter as a percentage
+ *                    based on number of insertions and the expected number of
+ *                    elements within the filter.
  *
  * Args:
  *     bf - filter to check capacity
  *
  * Returns:
- *     a double representing the occupancy of the bloom filter
+ *     a double representing the capacity of the bloom filter
  */
 double bloom_capacity(bloomfilter bf) {
 	return ((double)bf.insertions / (double)bf.expected) * 100.0;
 }
 
-/* bloom_lookup() -- check if an element is likely in a filter
+/* bloom_lookup() - check if an element is likely in a filter
  *
  * Args:
  *     bf      - filter to use
@@ -99,7 +107,7 @@ bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
 		mmh3_128(element, len, i, hash);
 		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
 
-		bytepos = ceil(result / 8);
+		bytepos = result / 8;
 		bitpos = result % 8;
 
 		if ((bf.bitmap[bytepos] & (0x01 << bitpos)) == 0) {
@@ -110,7 +118,7 @@ bool bloom_lookup(const bloomfilter bf, void *element, const size_t len) {
 	return true;
 }
 
-/* bloom_lookup_string() -- helper function for bloom_lookup() to handle strings
+/* bloom_lookup_string() - helper function for bloom_lookup() to handle strings
  *
  * Args:
  *     bf      - filter to use
@@ -124,7 +132,7 @@ bool bloom_lookup_string(const bloomfilter bf, const char *element) {
 	return bloom_lookup(bf, (uint8_t *)element, strlen(element));
 }
 
-/* bloom_add() -- add/insert an element into a bloom filter
+/* bloom_add() - add/insert an element into a bloom filter
  *
  * Args:
  *     bf      - filter to use
@@ -145,7 +153,7 @@ void bloom_add(bloomfilter *bf, void *element, const size_t len) {
 		mmh3_128(element, len, i, hash);
 		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
 
-		byte_position = ceil(result / 8);
+		byte_position = result / 8;
 		bit_position  = result % 8;
 
 		if ((bf->bitmap[byte_position] & (0x01 << bit_position)) == 0) {
@@ -160,7 +168,7 @@ void bloom_add(bloomfilter *bf, void *element, const size_t len) {
 	}
 }
 
-/* bloom_add_string() -- helper function for bloom_add() to handle strings
+/* bloom_add_string() - helper function for bloom_add() to handle strings
  *
  * Args:
  *     bf      - filter to use
@@ -173,7 +181,7 @@ void bloom_add_string(bloomfilter *bf, const char *element) {
 	bloom_add(bf, (uint8_t *)element, strlen(element));
 }
 
-/* bloom_save() -- save a bloom filter to disk
+/* bloom_save() - save a bloom filter to disk
  *
  * Format of these files on disk is:
  *    +---------------------+
@@ -187,67 +195,104 @@ void bloom_add_string(bloomfilter *bf, const char *element) {
  *     path - file path to save filter
  *
  * Returns:
- *      true on success, false on failure
+ *      BF_SUCCESS on success
+ *      BF_FOPEN if unable to open file
+ *      BF_FWRITE if unable to write to file
+ *
+ * TODO: test
  */
-bool bloom_save(bloomfilter bf, const char *path) {
+bloom_error_t bloom_save(bloomfilter bf, const char *path) {
 	FILE *fp;
 
 	fp = fopen(path, "wb");
 	if (fp == NULL) {
-		return false;
+		return BF_FOPEN;
 	}
 
 	if (fwrite(&bf, sizeof(bloomfilter), 1, fp) != 1 ||
 		fwrite(bf.bitmap, bf.bitmap_size, 1, fp) != 1) {
 		fclose(fp);
-		return false;
+		return BF_FWRITE;
 	}
 
 	fclose(fp);
-	return true;
+	return BF_SUCCESS;
 }
 
-/* bloom_load() -- load a bloom filter from disk
+/* bloom_load() - load a bloom filter from disk
  *
  * Args:
  *     bf   - bloom filter object of new filter
  *     path - location of filter on disk
  *
  * Returns:
- *     true on success, false on failure
+ *     BF_SUCCESS on success
+ *     BF_FOPEN if unable to open file
+ *     BF_FREAD if unable to read file
+ *     BF_FSTAT if fstat() fails
+ *     BF_INVALIDFILE if file is invalid
+ *     BF_OUTOFMEMORY if memory allocation fails
+ *
+ * TODO: test various edge cases
  */
-bool bloom_load(bloomfilter *bf, const char *path) {
+bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	FILE        *fp;
 	struct stat  sb;
 
 	fp = fopen(path, "rb");
 	if (fp == NULL) {
-		return false;
+		return BF_FOPEN;
 	}
 
 	if (fstat(fileno(fp), &sb) == -1) {
 		fclose(fp);
-		return false;
+		return BF_FSTAT;
 	}
 
-	fread(bf, sizeof(bloomfilter), 1, fp);
+	if (fread(bf, sizeof(bloomfilter), 1, fp) != 1) {
+		fclose(fp);
+		return BF_FREAD;
+	}
 
 	// basic sanity check. should fail if filter isn't valid
-	if (ceil(bf->size / 8) != bf->bitmap_size ||
+	if ((bf->size / 8) != bf->bitmap_size ||
 		sizeof(bloomfilter) + bf->bitmap_size != sb.st_size) {
 		fclose(fp);
-		return false;
+		return BF_INVALIDFILE;
 	}
 
 	bf->bitmap = malloc(bf->bitmap_size);
 	if (bf->bitmap == NULL) {
 		fclose(fp);
-		return false;
+		return BF_OUTOFMEMORY;
 	}
 
-	fread(bf->bitmap, bf->bitmap_size, 1, fp);
+	if (fread(bf->bitmap, bf->bitmap_size, 1, fp) != 1) {
+		fclose(fp);
+		free(bf->bitmap);
+		return BF_FREAD;
+	}
 
 	fclose(fp);
 
-	return true;
+	return BF_SUCCESS;
+}
+
+/* bloom_strerror() - returns string containing error message
+ *
+ * Args:
+ *     error - error number returned from function
+ *
+ * Returns:
+ *     "Unknown error" if 'error' is out of range.
+ *     Otherwise, a pointer to a string containing relevant error message.
+ *
+ * TODO test
+ */
+const char *bloom_strerror(bloom_error_t error) {
+	if (error < 0 || error >= BF_ERRORCOUNT) {
+		return "Unknown error";
+	}
+
+	return bloom_errors[error];
 }
