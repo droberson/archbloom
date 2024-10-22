@@ -36,17 +36,25 @@ static uint64_t ideal_size(const uint64_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
 }
 
-/* cbloom_init() -- initialize counting bloom filter
+/**
+ * @brief Initialize a counting Bloom filter.
  *
- * Args:
- *     cbf      - filter to initialize
- *     expected - expected number of elements in filter
- *     accuracy - margin of acceptable error. ex: 0.01 is "99.99%" accurate
- *     csize    - size of counter: COUNTER_8BIT, _16BIT, _32BIT, _64BIT, ...
+ * This function sets up a counting Bloom filter based on the expected
+ * number of elements, desired accuracy, and the specified counter
+ * size. The counter size can be chosen based on the expected number
+ * of insertions, allowing for optimized memory usage.
  *
- * Returns:
- *     CBF_SUCCESS (0) on success
- *     corresponding error value on failure
+ * @param cbf Pointer to the counting Bloom filter to initialize.
+ * @param expected Expected number of elements to store in the filter.
+ * @param accuracy Desired false positive rate (e.g., 0.01 for 99.99% accuracy).
+ * @param csize Size of the counter, which can be one of COUNTER_8BIT,
+ * COUNTER_16BIT, COUNTER_32BIT, or COUNTER_64BIT.
+ *
+ * @return CBF_SUCCESS on success.
+ * @return CBF_OUTOFMEMORY if memory allocation fails.
+ * @return CBF_INVALIDSIZE if the counter size is invalid.
+ * @return CBF_INVALIDPARAM if one or more input parameters are invalid.
+ * @return CBF_ERROR if an unspecified error occurs.
  */
 cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float accuracy, counter_size csize) {
 	cbf->size      = ideal_size(expected, accuracy);
@@ -79,13 +87,14 @@ cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float
 	return CBF_SUCCESS;
 }
 
-/* cbloom_destroy() -- free memory allocated by cbloom_init()
+/**
+ * @brief Frees memory allocated by `cbloom_init()`.
  *
- * Args:
- *     cbf - filter to free
+ * This function releases all resources and memory allocated for the
+ * counting Bloom filter during its initialization. After calling this
+ * function, the filter should not be used unless reinitialized.
  *
- * Returns:
- *     Nothing
+ * @param cbf Pointer to the counting Bloom filter to free.
  */
 void cbloom_destroy(cbloomfilter *cbf) {
 	if (cbf->countermap) {
@@ -162,17 +171,23 @@ static void dec_counter(cbloomfilter *cbf, uint64_t position) {
 	}
 }
 
-/* cbloom_count() -- get approximate count of an element in the filter
+/**
+ * @brief Retrieve the approximate count of an element in the counting
+ * Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - element to count
- *     len     - length of element
+ * This function returns the approximate count of the specified
+ * element in the counting Bloom filter. Since the Bloom filter is
+ * probabilistic in nature, the count may not be exact but provides a
+ * reasonable estimate.
  *
- * Returns:
- *     size_t representing the approximate count of 'element' in the filter
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the element to count.
+ * @param len Length of the element in bytes.
  *
- * TODO: test this
+ * @return A `size_t` value representing the approximate count of the
+ * element in the filter.
+ *
+ * TODO: test
  */
 size_t cbloom_count(const cbloomfilter cbf, void *element, size_t len) {
 	uint64_t hash[2];
@@ -192,31 +207,40 @@ size_t cbloom_count(const cbloomfilter cbf, void *element, size_t len) {
 	return count;
 }
 
-/* cbloom_count_string() -- helper function to get approximate count of
- *                                 a string element in the filter.
+/**
+ * @brief Helper function to retrieve the approximate count of a
+ * string element in the counting Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - element to count
+ * This function returns the approximate count of the specified string
+ * element in the counting Bloom filter. Since Bloom filters are
+ * probabilistic, the count is not exact but provides a reasonable
+ * estimate.
  *
- * Returns:
- *     size_t representing the approximate count of 'element' in the filter
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the string element to count.
+ *
+ * @return A `size_t` value representing the approximate count of the
+ * string element in the filter.
  */
-
 size_t cbloom_count_string(const cbloomfilter cbf, char *element) {
 	return cbloom_count(cbf, (uint8_t *)element, strlen(element));
 }
 
-/* cbloom_lookup() -- check if an element is likely in the filter
+/**
+ * @brief Check if an element is likely in the counting Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - element to look up
- *     len     - length of element in bytes
+ * This function checks whether the specified element is likely
+ * present in the counting Bloom filter. Due to the probabilistic
+ * nature of Bloom filters, false positives are possible. If the
+ * function returns `true`, the element is probably in the filter. If
+ * it returns `false`, the element is definitely not in the filter.
  *
- * Returns:
- *     true if element is probably in the filter
- *     false if element is definitely not in the filter
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the element to look up.
+ * @param len Length of the element in bytes.
+ *
+ * @return `true` if the element is likely in the filter.
+ * @return `false` if the element is definitely not in the filter.
  */
 bool cbloom_lookup(const cbloomfilter cbf, void *element, const size_t len) {
 	uint64_t hash[2];
@@ -235,29 +259,35 @@ bool cbloom_lookup(const cbloomfilter cbf, void *element, const size_t len) {
 	return true;
 }
 
-/* cbloom_lookup_string() -- helper function for looking up strings
+/**
+ * @brief Helper function for checking if a string is likely in the
+ * counting Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - string to look up
+ * This function checks whether the specified string element is likely
+ * present in the counting Bloom filter. If the function returns
+ * `true`, the element is probably in the filter. If it returns
+ * `false`, the element is definitely not in the filter.
  *
- * Returns:
- *     true if element is probably in the set
- *     false if element is definitely not in the set
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the string element to look up.
+ *
+ * @return `true` if the string is likely in the filter.
+ * @return `false` if the string is definitely not in the filter.
  */
 bool cbloom_lookup_string(const cbloomfilter cbf, const char *element) {
 	return cbloom_lookup(cbf, (uint8_t *)element, strlen(element));
 }
 
-/* cbloom_add() -- add an element to a counting bloom filter
+/**
+ * @brief Add an element to the counting Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - element to add
- *     len     - length of element in bytes
+ * This function inserts the specified element into the counting Bloom
+ * filter, updating the filter's counters to track the number of times
+ * the element has been added.
  *
- * Returns:
- *     Nothing
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the element to add to the filter.
+ * @param len Length of the element in bytes.
  */
 void cbloom_add(cbloomfilter cbf, void *element, const size_t len) {
 	uint64_t hash[2];
@@ -270,28 +300,33 @@ void cbloom_add(cbloomfilter cbf, void *element, const size_t len) {
 	}
 }
 
-/* cbloom_add_string() -- helper function for adding strings
+/**
+ * @brief Helper function for adding string elements to a counting
+ * Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - string to add to the filter
+ * This function inserts the specified string into the counting Bloom
+ * filter, updating the filter's counters to track the number of times
+ * the string has been added.
  *
- * Returns:
- *     Nothing
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the string to add to the filter.
  */
 void cbloom_add_string(cbloomfilter cbf, const char *element) {
 	cbloom_add(cbf, (uint8_t *)element, strlen(element));
 }
 
-/* cbloom_remove() -- remove an element from a counting bloom filter
+/**
+ * @brief Remove an element from the counting Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - element to remove
- *     len     - length of element in bytes
+ * This function decreases the count of the specified element in the
+ * counting Bloom filter. It decrements the counters associated with
+ * the element, effectively "removing" the element from the filter. If
+ * the element has been added multiple times, the counter will reflect
+ * the remaining instances after removal.
  *
- * Returns:
- *     Nothing
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the element to remove from the filter.
+ * @param len Length of the element in bytes.
  */
 void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
 	uint64_t hash[2];
@@ -314,14 +349,18 @@ void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
 	}
 }
 
-/* cbloom_remove_string() -- helper function to remove strings
+/**
+ * @brief Helper function for removing string elements from a counting
+ * Bloom filter.
  *
- * Args:
- *     cbf     - filter to use
- *     element - string to remove
+ * This function decreases the count of the specified string in the
+ * counting Bloom filter. It decrements the counters associated with
+ * the string, effectively "removing" the string from the filter. If
+ * the string has been added multiple times, the counter will reflect
+ * the remaining instances after removal.
  *
- * Returns:
- *     Nothing
+ * @param cbf Counting Bloom filter to use.
+ * @param element Pointer to the string to remove from the filter.
  */
 void cbloom_remove_string(cbloomfilter cbf, const char *element) {
 	cbloom_remove(cbf, (uint8_t *)element, strlen(element));
@@ -381,23 +420,23 @@ void cbloom_clear(cbloomfilter *cbf) {
 	memset(cbf->countermap, 0, cbf->countermap_size);
 }
 
-/* cbloom_save() -- save a counting bloom filter to disk
+/**
+ * @brief Save a counting Bloom filter to disk.
  *
- * Format of these files on disk:
- *    +------------------------------+
- *    | counting bloom filter struct |
- *    +------------------------------+
- *    |             data             |
- *    +------------------------------+
+ * This function saves the current state of the counting Bloom filter
+ * to a file on disk. The file contains the filter structure followed
+ * by the filter's data (e.g., counters).
  *
- * Args:
- *     cbf  - filter to save
- *     path - path to save filter
+ * The file format is as follows:
+ * - First, the `cbloomfilter` struct is saved.
+ * - Then, the filter's data (e.g., counters) is saved.
  *
- * Returns:
- *     CBF_SUCCESS on success
- *     CBF_FOPEN if unable to open file
- *     CBF_FWRITE if unable to write to file
+ * @param cbf Counting Bloom filter to save.
+ * @param path File path where the filter will be saved.
+ *
+ * @return CBF_SUCCESS on success.
+ * @return CBF_FOPEN if the file could not be opened for writing.
+ * @return CBF_FWRITE if there was an error writing to the file.
  */
 cbloom_error_t cbloom_save(cbloomfilter cbf, const char *path) {
 	FILE        *fp;
@@ -418,19 +457,22 @@ cbloom_error_t cbloom_save(cbloomfilter cbf, const char *path) {
 	return CBF_SUCCESS;
 }
 
-/* cbloom_load() -- load a counting bloom filter from disk
+/**
+ * @brief Load a counting Bloom filter from a file on disk.
  *
- * Args:
- *     cbf  - counting bloom filter struct to populate
- *     path - path on disk to counting bloom filter file
+ * This function reads the state of a counting Bloom filter from a
+ * specified file on disk and populates the `cbloomfilter` structure
+ * with the filter's data.
  *
- * Returns:
- *     CBF_SUCCESS on success
- *     CBF_FOPEN if unable to open file
- *     CBF_FREAD if unable to read file
- *     CBF_FSTAT if unable to stat() file descriptor
- *     CBF_INVALIDFILE if file is unable to be parsed
- *     CBF_OUTOFMEMORY if out of memory
+ * @param cbf Pointer to the counting Bloom filter struct to populate.
+ * @param path File path to the counting Bloom filter file.
+ *
+ * @return CBF_SUCCESS on success.
+ * @return CBF_FOPEN if the file could not be opened.
+ * @return CBF_FREAD if there was an error reading the file.
+ * @return CBF_FSTAT if the stat() system call failed on the file descriptor.
+ * @return CBF_INVALIDFILE if the file format is invalid or unparseable.
+ * @return CBF_OUTOFMEMORY if memory allocation failed.
  */
 cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 	FILE        *fp;
