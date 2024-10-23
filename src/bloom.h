@@ -153,4 +153,13 @@ bloom_error_t  bloom_save(const bloomfilter, const char *);
 bloom_error_t  bloom_load(bloomfilter *, const char *);
 const char    *bloom_strerror(const bloom_error_t);
 
+/*
+ * TODO: potential additions
+ * bool bloom_add_if_not_present(bloomfilter *, const void *, const size_t);
+ * bool bloom_add_if_not_present_string(bloomfilter *, const char *);
+ * bloom_error_t bloom_merge(bloomfilter *, const bloomfilter *); // OR
+ * bloom_error_t bloom_intersect(bloomfilter*, const bloomfilter); // AND
+ * float bloom_estimate_false_positive_rate(const bloomfilter *);
+ * bool bloom_reset_if_saturation_exceeds(bloomfilter *, float threshold);
+ */
 #endif /* BLOOM_H */
