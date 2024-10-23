@@ -131,11 +131,11 @@ static const uint8_t bit_count_table[256] = {
  * @return The number of bits set to 1 in the provided Bloom filter.
  * TODO: test
  */
-size_t bloom_saturation_count(const bloomfilter bf) {
+size_t bloom_saturation_count(const bloomfilter *bf) {
 	size_t count = 0;
 
-	for (size_t i = 0; i < bf.bitmap_size; i++) {
-		count += bit_count_table[bf.bitmap[i]];
+	for (size_t i = 0; i < bf->bitmap_size; i++) {
+		count += bit_count_table[bf->bitmap[i]];
 	}
 
 	return count;
@@ -155,8 +155,8 @@ size_t bloom_saturation_count(const bloomfilter bf) {
  *
  * TODO: test
  */
-float bloom_saturation(const bloomfilter bf) {
-	size_t total_bits = bf.bitmap_size * 8;
+float bloom_saturation(const bloomfilter *bf) {
+	size_t total_bits = bf->bitmap_size * 8;
 	size_t set_bits   = bloom_saturation_count(bf);
 
 	return (float)set_bits / total_bits * 100.0;
@@ -176,8 +176,8 @@ float bloom_saturation(const bloomfilter bf) {
  *
  * TODO: is this function worthwhile? seems like saturation is a better measure
  */
-double bloom_capacity(const bloomfilter bf) {
-	return ((double)bf.insertions / (double)bf.expected) * 100.0;
+double bloom_capacity(const bloomfilter *bf) {
+	return ((double)bf->insertions / (double)bf->expected) * 100.0;
 }
 
 /**
@@ -208,20 +208,20 @@ static inline void calculate_positions(uint64_t position, uint64_t *byte_positio
  * @return true if the element is probably in the filter.
  * @return false if the element is definitely not in the filter.
  */
-bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
-	uint64_t hashes[bf.hashcount];
+bool bloom_lookup(const bloomfilter *bf, const void *element, const size_t len) {
+	uint64_t hashes[bf->hashcount];
 	uint64_t result;
 	uint64_t byte_position;
 	uint8_t  bit_position;
 
-	mmh3_64_make_hashes(element, len, bf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, bf->hashcount, hashes);
 
-	for (size_t i = 0; i < bf.hashcount; i++) {
-		result = hashes[i] % bf.size;
+	for (size_t i = 0; i < bf->hashcount; i++) {
+		result = hashes[i] % bf->size;
 
 		calculate_positions(result, &byte_position, &bit_position);
 
-		if ((bf.bitmap[byte_position] & (0x01 << bit_position)) == 0) {
+		if ((bf->bitmap[byte_position] & (0x01 << bit_position)) == 0) {
 			return false;
 		}
 	}
@@ -241,7 +241,7 @@ bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
  * @return true if the string is likely in the filter.
  * @return false if the element is definitely not in the filter.
  */
-bool bloom_lookup_string(const bloomfilter bf, const char *element) {
+bool bloom_lookup_string(const bloomfilter *bf, const char *element) {
 	return bloom_lookup(bf, (uint8_t *)element, strlen(element));
 }
 
@@ -371,7 +371,7 @@ bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
  *
  * TODO: test
  */
-bloom_error_t bloom_save(const bloomfilter bf, const char *path) {
+bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	FILE *fp;
 
 	fp = fopen(path, "wb");
@@ -379,8 +379,8 @@ bloom_error_t bloom_save(const bloomfilter bf, const char *path) {
 		return BF_FOPEN;
 	}
 
-	if (fwrite(&bf, sizeof(bloomfilter), 1, fp) != 1 ||
-		fwrite(bf.bitmap, bf.bitmap_size, 1, fp) != 1) {
+	if (fwrite(bf, sizeof(bloomfilter), 1, fp) != 1 ||
+		fwrite(bf->bitmap, bf->bitmap_size, 1, fp) != 1) {
 		fclose(fp);
 		return BF_FWRITE;
 	}

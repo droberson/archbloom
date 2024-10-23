@@ -140,16 +140,16 @@ typedef struct {
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
 void           bloom_destroy(bloomfilter *);
 void           bloom_clear(bloomfilter *);
-size_t         bloom_saturation_count(const bloomfilter);
-float          bloom_saturation(const bloomfilter);
-double         bloom_capacity(const bloomfilter);
-bool           bloom_lookup(const bloomfilter, const void *, const size_t);
-bool           bloom_lookup_string(const bloomfilter, const char *);
+size_t         bloom_saturation_count(const bloomfilter *);
+float          bloom_saturation(const bloomfilter *);
+double         bloom_capacity(const bloomfilter *);
+bool           bloom_lookup(const bloomfilter *, const void *, const size_t);
+bool           bloom_lookup_string(const bloomfilter *, const char *);
 bool           bloom_lookup_or_add(bloomfilter *, const void *, const size_t);
 bool           bloom_lookup_or_add_string(bloomfilter *, const char *);
 void           bloom_add(bloomfilter *, const void *, const size_t);
 void           bloom_add_string(bloomfilter *, const char *);
-bloom_error_t  bloom_save(const bloomfilter, const char *);
+bloom_error_t  bloom_save(const bloomfilter *, const char *);
 bloom_error_t  bloom_load(bloomfilter *, const char *);
 const char    *bloom_strerror(const bloom_error_t);
 
