@@ -101,4 +101,11 @@ cbloom_error_t  cbloom_save(cbloomfilter, const char *);
 cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
 const char     *cbloom_strerror(cbloom_error_t);
 
+/*
+ * TODO: potential additions
+ * float cbloom_get_average_count(cbloomfilter);
+ * bool cbloom_remove_if_count_above(cbloomfilter *, const void *, size_t threshold, size_t len);
+ * bool cbloom_reset_element(cbloomflilter *, const void *element, size_t len);
+ * size_t cbloom_count_elements_above_threshold(const cbloomfilter, size_t threshold);
+*/
 #endif /* CBLOOM_H */
