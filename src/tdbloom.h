@@ -106,4 +106,10 @@ tdbloom_error_t  tdbloom_save(tdbloom, const char *);
 tdbloom_error_t  tdbloom_load(tdbloom *, const char *);
 const char      *tdbloom_strerror(tdbloom_error_t);
 
+/*
+ * TODO: potential additions
+ * bool tdbloom_age_element(tdbloom *, const void *element, size_t len, size_t amount);
+ * void tdbloom_adjust_timeout(tdbloom *, size_t new_timeout);
+ * size_t tdbloom_saturation_count(const tdbloom);
+ */
 #endif /* TDBLOOM_H */
