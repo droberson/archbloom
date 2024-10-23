@@ -198,13 +198,14 @@ static void dec_counter(cbloomfilter *cbf, uint64_t position) {
  * TODO: test
  */
 size_t cbloom_count(const cbloomfilter cbf, void *element, size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[cbf.hashcount];
 	uint64_t position;
 	uint64_t count = UINT64_MAX;
 
+	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+
 	for (int i = 0; i < cbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		position = ((hash[0] % cbf.size) + (hash[1] % cbf.size)) % cbf.size;
+		position = hashes[i] % cbf.size;
 
 		uint64_t current_count = get_counter(&cbf, position);
 		if (current_count < count) {
@@ -251,16 +252,16 @@ size_t cbloom_count_string(const cbloomfilter cbf, char *element) {
  * @return `false` if the element is definitely not in the filter.
  */
 bool cbloom_lookup(const cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[cbf.hashcount];
 	uint64_t position;
 
-	for (int i = 0; i < cbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		position = ((hash[0] % cbf.size) + (hash[1] % cbf.size)) % cbf.size;
+	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
 
-		// if any counter is zero, element isn't in the filter
+	for (int i = 0; i < cbf.hashcount; i++) {
+		position = hashes[i] % cbf.size;
+
 		if (get_counter(&cbf,position) == 0) {
-			return false;
+			return false; // element is definitely not in the filter
 		}
 	}
 
@@ -298,12 +299,13 @@ bool cbloom_lookup_string(const cbloomfilter cbf, const char *element) {
  * @param len Length of the element in bytes.
  */
 void cbloom_add(cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[cbf.hashcount];
 	uint64_t position;
 
+	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+
 	for (int i = 0; i < cbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		position = ((hash[0] % cbf.size) + (hash[1] % cbf.size)) % cbf.size;
+		position = hashes[i] % cbf.size;
 		inc_counter(&cbf, position);
 	}
 }
@@ -337,13 +339,14 @@ void cbloom_add_string(cbloomfilter cbf, const char *element) {
  * @param len Length of the element in bytes.
  */
 void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[cbf.hashcount];
 	uint64_t positions[cbf.hashcount];
 
+	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+
 	bool shouldremove = true;
-	for (int i = 0; i < cbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		positions[i] = ((hash[0] % cbf.size) + (hash[1] % cbf.size)) % cbf.size;
+	for (size_t i = 0; i < cbf.hashcount; i++) {
+		positions[i] = hashes[i] % cbf.size;
 		if (get_counter(&cbf, positions[i]) == 0) {
 			shouldremove = false;
 			break;

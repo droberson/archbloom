@@ -285,12 +285,13 @@ void mmh3_128(const void *key, const size_t len, const uint64_t seed, uint64_t *
 }
 
 /**
- * @brief Generate multiple 64 bit hashes using double hashing.
+ * @brief Generate multiple 64 bit hashes using double hashing
+ * technique.
  *
  * This function takes an element and returns an array of 'count'
  * hashes using a double-hashing technique. It only performs two
  * "real" hashing operations and derives additional hashes by
- * combining these values
+ * combining these values.
  *
  * This is useful for several algorithms that require the usage of
  * multiple hashes per element.
@@ -302,7 +303,7 @@ void mmh3_128(const void *key, const size_t len, const uint64_t seed, uint64_t *
  *
  * Example usage:
  *     uint64_t hashes[hashcount];
- *     mmh3_64_make_hashes("blah", 4, filter.hashcount, hashes);
+ *     mmh3_64_make_hashes("blah", 4, hashcount, hashes);
  */
 void mmh3_64_make_hashes(const void *data, size_t len, size_t count, uint64_t *hash_output) {
     uint64_t hash[2];

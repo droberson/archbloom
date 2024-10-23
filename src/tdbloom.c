@@ -286,15 +286,16 @@ float tdbloom_saturation(const tdbloom tdbf) {
  */
 void tdbloom_add(tdbloom *tf, const void *element, const size_t len) {
 	uint64_t    result;
-	uint64_t    hash[2];
+	uint64_t    hashes[tf->hashcount];
 	time_t      now = get_monotonic_time();
 	size_t      ts = ((now - tf->start_time) % tf->max_time + tf->max_time) % tf->max_time + 1;
 
+	mmh3_64_make_hashes(element, len, tf->hashcount, hashes);
+
 	for (int i = 0; i < tf->hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % tf->size) + (hash[1] % tf->size)) % tf->size;
+		result = hashes[i] % tf->size;
 		switch(tf->bytes) {
-		case 1:	((uint8_t *)tf->filter)[result] = ts; break;
+		case 1:	((uint8_t *)tf->filter)[result]  = ts; break;
 		case 2:	((uint16_t *)tf->filter)[result] = ts; break;
 		case 4:	((uint32_t *)tf->filter)[result] = ts; break;
 		case 8: ((uint64_t *)tf->filter)[result] = ts; break;
@@ -332,15 +333,16 @@ void tdbloom_add_string(tdbloom tdbf, const char *element) {
  */
 bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
 	uint64_t    result;
-	uint64_t    hash[2];
+	uint64_t    hashes[tdbf.hashcount];
 	time_t      now = get_monotonic_time();
 	size_t      ts = ((now - tdbf.start_time) % tdbf.max_time + tdbf.max_time) % tdbf.max_time + 1;
 
 	if ((now - tdbf.start_time) > tdbf.max_time) { return false; }
 
+	mmh3_64_make_hashes(element, len, tdbf.hashcount, hashes);
+
 	for (int i = 0; i < tdbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % tdbf.size) + (hash[1] % tdbf.size)) % tdbf.size;
+		result = hashes[i] % tdbf.size;
 
 		size_t value;
 		switch(tdbf.bytes) {
@@ -393,13 +395,14 @@ bool tdbloom_lookup_string(const tdbloom tdbf, const char *element) {
  */
 bool tdbloom_has_expired(const tdbloom tdbf, const void *element, size_t len) {
 	uint64_t result;
-	uint64_t hash[2];
+	uint64_t hashes[tdbf.hashcount];
 	time_t   now = get_monotonic_time();
 	size_t   ts  = ((now - tdbf.start_time) % tdbf.max_time + tdbf.max_time) % tdbf.max_time + 1;
 
+	mmh3_64_make_hashes(element, len, tdbf.hashcount, hashes);
+
 	for (size_t i = 0; i < tdbf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % tdbf.size) + (hash[1] % tdbf.size)) % tdbf.size;
+		result = hashes[i] % tdbf.size;
 
 		size_t value;
 		switch (tdbf.bytes) {

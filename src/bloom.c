@@ -209,14 +209,15 @@ static inline void calculate_positions(uint64_t position, uint64_t *byte_positio
  * @return false if the element is definitely not in the filter.
  */
 bool bloom_lookup(const bloomfilter bf, const void *element, const size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[bf.hashcount];
 	uint64_t result;
 	uint64_t byte_position;
 	uint8_t  bit_position;
 
+	mmh3_64_make_hashes(element, len, bf.hashcount, hashes);
+
 	for (size_t i = 0; i < bf.hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % bf.size) + (hash[1] % bf.size)) % bf.size;
+		result = hashes[i] % bf.size;
 
 		calculate_positions(result, &byte_position, &bit_position);
 
@@ -254,15 +255,16 @@ bool bloom_lookup_string(const bloomfilter bf, const char *element) {
  * @param len Length of element in bytes.
  */
 void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
-	uint64_t  hash[2];
+	uint64_t  hashes[bf->hashcount];
 	uint64_t  result;
 	uint64_t  byte_position;
 	uint8_t   bit_position;
 	bool      all_bits_set = true;
 
+	mmh3_64_make_hashes(element, len, bf->hashcount, hashes);
+
 	for (size_t i = 0; i < bf->hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
+		result = hashes[i] % bf->size;
 
 		calculate_positions(result, &byte_position, &bit_position);
 
@@ -305,15 +307,16 @@ void bloom_add_string(bloomfilter *bf, const char *element) {
  * TODO: test
  */
 bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len) {
-	uint64_t hash[2];
+	uint64_t hashes[bf->hashcount];
 	size_t   result;
 	uint64_t byte_position;
 	uint8_t  bit_position;
 	bool     found_all = true;
 
+	mmh3_64_make_hashes(element, len, bf->hashcount, hashes);
+
 	for (size_t i = 0; i < bf->hashcount; i++) {
-		mmh3_128(element, len, i, hash);
-		result = ((hash[0] % bf->size) + (hash[1] % bf->size)) % bf->size;
+		result = hashes[i] % bf->size;
 
 		calculate_positions(result, &byte_position, &bit_position);
 
