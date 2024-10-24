@@ -17,7 +17,7 @@ int main() {
 	printf("time value bytes: %d\n", tf.bytes);
 	printf("max time: %d\n", tf.max_time);
 
-	tdbloom_add_string(tf, "a");
+	tdbloom_add_string(&tf, "a");
 	tdbloom_add(&tf, "b", 1);
 
 	printf("filter hex dump: ");
@@ -27,21 +27,21 @@ int main() {
 	printf("\n");
 
 	bool result;
-	result =  tdbloom_lookup_string(tf, "a");
+	result =  tdbloom_lookup_string(&tf, "a");
 	printf("a: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"a\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result =  tdbloom_lookup_string(tf, "b");
+	result =  tdbloom_lookup_string(&tf, "b");
 	printf("b: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"b\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = tdbloom_lookup(tf, (uint8_t *)"c", 1);
+	result = tdbloom_lookup(&tf, (uint8_t *)"c", 1);
 	printf("c: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"c\" should NOT be in the filter\n");
@@ -51,22 +51,22 @@ int main() {
 	puts("sleeping three seconds to expire results...");
 	tf.start_time -= 3;
 
-	result = tdbloom_lookup_string(tf, "a");
+	result = tdbloom_lookup_string(&tf, "a");
 	printf("a: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"a\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = tdbloom_lookup_string(tf, "b");
+	result = tdbloom_lookup_string(&tf, "b");
 	printf("b: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"b\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	tdbloom_add_string(tf, "c");
-	result = tdbloom_lookup(tf, (uint8_t *)"c", 1);
+	tdbloom_add_string(&tf, "c");
+	result = tdbloom_lookup(&tf, (uint8_t *)"c", 1);
 	printf("c: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"c\" should be in the filter\n");
@@ -75,11 +75,11 @@ int main() {
 
 	tdbloom tf2;
 	tdbloom_init(&tf2, 10, 0.01, 200);
-	tdbloom_add_string(tf2, "testytesttest");
+	tdbloom_add_string(&tf2, "testytesttest");
 	printf("sleeping 270 seconds\n");
 	tf2.start_time -= 270;
 
-	result = tdbloom_lookup(tf2, "testytesttest", strlen("testytesttest"));
+	result = tdbloom_lookup(&tf2, "testytesttest", strlen("testytesttest"));
 	printf("testytesttest: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"testytesttest\" should NOT be in the filter\n");
@@ -87,8 +87,8 @@ int main() {
 	}
 
 	tf2.start_time += 270; // reset start time
-	tdbloom_add_string(tf2, "lol");
-	result = tdbloom_lookup(tf2, "lol", strlen("lol"));
+	tdbloom_add_string(&tf2, "lol");
+	result = tdbloom_lookup(&tf2, "lol", strlen("lol"));
 	printf("lol: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"lol\" should be in the filter\n");

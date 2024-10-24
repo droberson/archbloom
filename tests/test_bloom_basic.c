@@ -22,28 +22,28 @@ int main() {
 	// Look up some stuff
 	bool result;
 
-	result = bloom_lookup_string(bf, "foo");
+	result = bloom_lookup_string(&bf, "foo");
 	printf("foo: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"foo\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = bloom_lookup_string(bf, "bar");
+	result = bloom_lookup_string(&bf, "bar");
 	printf("bar: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"bar\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = bloom_lookup_string(bf, "baz");
+	result = bloom_lookup_string(&bf, "baz");
 	printf("baz: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"baz\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result =  bloom_lookup_string(bf, "asdf");
+	result =  bloom_lookup_string(&bf, "asdf");
 	printf("asdf: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"asdf\" should be in filter\n");
@@ -51,7 +51,7 @@ int main() {
 	}
 
 	// Hex dump the bitmap
-	printf("occupancy: %lf %d\n", bloom_capacity(bf), bf.insertions);
+	printf("occupancy: %lf %d\n", bloom_capacity(&bf), bf.insertions);
 	printf("filter hex dump: ");
 	for (size_t i = 0; i < bf.bitmap_size; i++) {
 		printf("%02x ", bf.bitmap[i]);
@@ -60,7 +60,8 @@ int main() {
 
 	// Save to file
 	// TODO: randomize /tmp filenames
-	bloom_save(bf, "/tmp/bloom");
+	printf("attempting to save filter to /tmp/bloom\n");
+	bloom_save(&bf, "/tmp/bloom");
 	bloom_destroy(&bf);
 
 	// Load from file
@@ -77,28 +78,28 @@ int main() {
 	}
 	printf("\n");
 
-	result = bloom_lookup_string(newbloom, "foo");
+	result = bloom_lookup_string(&newbloom, "foo");
 	printf("foo: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"foo\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = bloom_lookup_string(newbloom, "bar");
+	result = bloom_lookup_string(&newbloom, "bar");
 	printf("bar: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"bar\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = bloom_lookup_string(newbloom, "baz");
+	result = bloom_lookup_string(&newbloom, "baz");
 	printf("baz: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"baz\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = bloom_lookup_string(newbloom, "asdf");
+	result = bloom_lookup_string(&newbloom, "asdf");
 	printf("asdf: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"asdf\" should be in filter\n");

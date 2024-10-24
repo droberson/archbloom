@@ -26,41 +26,41 @@ int main() {
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf.csize + 3)));
 
 	// add some data
-	cbloom_add_string(cbf, "foo");
-	cbloom_add_string(cbf, "bar");
+	cbloom_add_string(&cbf, "foo");
+	cbloom_add_string(&cbf, "bar");
 	// add a string twice to test removal
-	cbloom_add_string(cbf, "multi");
-	cbloom_add_string(cbf, "multi");
+	cbloom_add_string(&cbf, "multi");
+	cbloom_add_string(&cbf, "multi");
 
-	result = cbloom_lookup_string(cbf, "foo");
+	result = cbloom_lookup_string(&cbf, "foo");
 	printf("cbf foo lookup: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"foo\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = cbloom_lookup_string(cbf, "bar");
+	result = cbloom_lookup_string(&cbf, "bar");
 	printf("cbf bar lookup: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"bar\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = cbloom_lookup_string(cbf, "baz");
+	result = cbloom_lookup_string(&cbf, "baz");
 	printf("cbf baz lookup: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"bar\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	size_t count = cbloom_count_string(cbf, "multi");
+	size_t count = cbloom_count_string(&cbf, "multi");
 	printf("count \"multi\": %d\n", count);
 	if (count != 2) {
 		fprintf(stderr, "FAILURE: count should be 2\n");
 		return EXIT_FAILURE;
 	}
 
-	count = cbloom_count_string(cbf, "fizzbuzz");
+	count = cbloom_count_string(&cbf, "fizzbuzz");
 	printf("count \"fizzbuzz\": %d\n", count);
 	if (count != 0) {
 		fprintf(stderr, "FAILURE: count should be 0\n");
@@ -69,17 +69,17 @@ int main() {
 
 	// test removal
 	printf("removing elements from filter\n");
-	cbloom_remove_string(cbf, "bar");
-	cbloom_remove_string(cbf, "multi");
+	cbloom_remove_string(&cbf, "bar");
+	cbloom_remove_string(&cbf, "multi");
 
-	result = cbloom_lookup_string(cbf, "bar");
+	result = cbloom_lookup_string(&cbf, "bar");
 	printf("cbf bar lookup: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"bar\" should NOT be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = cbloom_lookup_string(cbf, "multi");
+	result = cbloom_lookup_string(&cbf, "multi");
 	printf("cbf multi lookup: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"multi\" should be in filter\n");
@@ -88,7 +88,7 @@ int main() {
 
 	// TODO test behavior if file doesn't exist or cant be written to
 	printf("Testing saving and loading from disk\n");
-	cbloom_error_t save_result = cbloom_save(cbf, "/tmp/cbloom");
+	cbloom_error_t save_result = cbloom_save(&cbf, "/tmp/cbloom");
 	if (save_result != CBF_SUCCESS) {
 		fprintf(stderr, "FAILURE: failed to save 8 bit counting bloom filter file to /tmp/cbloom: %s\n", cbloom_strerror(save_result));
 		return EXIT_FAILURE;
@@ -103,14 +103,14 @@ int main() {
 	printf("\tcountermap size: %d\n", newcbf.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (newcbf.csize + 3)));
 
-	result = cbloom_lookup_string(newcbf, "multi");
+	result = cbloom_lookup_string(&newcbf, "multi");
 	printf("cbf multi lookup: %d\n", result);
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"multi\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = cbloom_lookup_string(newcbf, "bar");
+	result = cbloom_lookup_string(&newcbf, "bar");
 	printf("cbf bar lookup: %d\n", result);
 	if (result != false) {
 		fprintf(stderr, "FAILURE: \"bar\" should NOT be in filter\n");
@@ -149,18 +149,18 @@ int main() {
 	printf("\tcountermap size: %d\n", cbf32.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)));
 
-	cbloom_add_string(cbf32, "the last metroid is in captivity");
-	cbloom_add_string(cbf32, "the galaxy is at peace.");
-	cbloom_add_string(cbf32, "blap");
-	cbloom_add_string(cbf32, "blap");
+	cbloom_add_string(&cbf32, "the last metroid is in captivity");
+	cbloom_add_string(&cbf32, "the galaxy is at peace.");
+	cbloom_add_string(&cbf32, "blap");
+	cbloom_add_string(&cbf32, "blap");
 
-	result = cbloom_lookup_string(cbf32, "the last metroid is in captivity");
+	result = cbloom_lookup_string(&cbf32, "the last metroid is in captivity");
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"the last metroid is in captivity\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
 
-	result = cbloom_save(cbf32, "/tmp/cbf32");
+	result = cbloom_save(&cbf32, "/tmp/cbf32");
 	if (result != CBF_SUCCESS) {
 		fprintf(stderr, "FAILURE: unable to save 32 bit counter to disk\n");
 		return EXIT_FAILURE;
@@ -177,7 +177,7 @@ int main() {
 	printf("\tcountermap size: %d\n", cbf32.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)));
 
-	result = cbloom_lookup_string(cbf32, "the last metroid is in captivity");
+	result = cbloom_lookup_string(&cbf32, "the last metroid is in captivity");
 	if (result != true) {
 		fprintf(stderr, "FAILURE: \"the last metroid is in captivity\" should be in filter\n");
 		return EXIT_FAILURE;
