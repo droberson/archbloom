@@ -150,11 +150,13 @@ bloom_error_t  bloom_merge(bloomfilter *,
 bloom_error_t  bloom_intersect(bloomfilter *,
 							   const bloomfilter *,
 							   const bloomfilter *);
-
+float          bloom_estimate_intersection(const bloomfilter *,
+										   const bloomfilter *);
 size_t         bloom_saturation_count(const bloomfilter *);
 float          bloom_saturation(const bloomfilter *);
-bool bloom_reset_if_saturation_exceeds(bloomfilter *, float threshold);
-float bloom_estimate_false_positive_rate(const bloomfilter *);
+bool           bloom_clear_if_saturation_exceeds(bloomfilter *,
+												 float threshold);
+float          bloom_estimate_false_positive_rate(const bloomfilter *);
 double         bloom_capacity(const bloomfilter *); // TODO consider removal
 
 bool           bloom_lookup(const bloomfilter *, const void *, const size_t);
@@ -164,7 +166,23 @@ bool           bloom_lookup_or_add_string(bloomfilter *, const char *);
 
 void           bloom_add(bloomfilter *, const void *, const size_t);
 void           bloom_add_string(bloomfilter *, const char *);
-bool bloom_add_if_not_present(bloomfilter *, const void *, const size_t);
-bool bloom_add_if_not_present_string(bloomfilter *, const char *);
+bool           bloom_add_if_not_present(bloomfilter *,
+										const void *,
+										const size_t);
+bool           bloom_add_if_not_present_string(bloomfilter *, const char *);
 
 #endif /* BLOOM_H */
+
+/* https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf
+ *
+ * TODO: Another nice feature is that Bloom filters can easily be
+ * halved in size, allowing an application to dynamically shrink a
+ * Bloom filter. Suppose that the size of the filter is a power of
+ * 2. To halve the size of the filter, just OR the first and second
+ * halves together. When hashing to do a lookup, the highest order bit
+ * can be masked.
+ *
+ * TODO: compressed bloom filters - by making the filters larger
+ * initally, then using compression, the filters can take up even less
+ * space than a "properly sized" Bloom filter - Broder & Mitzenmacher
+ */

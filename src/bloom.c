@@ -163,6 +163,73 @@ float bloom_saturation(const bloomfilter *bf) {
 }
 
 /**
+ * @brief Clears the Bloom filter if its saturation exceeds the given threshold.
+ *
+ * This function checks the saturation of the Bloom filter and, if it
+ * exceeds the specified threshold, clears the filter and returns
+ * `true`. If the saturation is under the threshold, the filter
+ * remains unchanged and the function returns `false`.
+ *
+ * @param bf Pointer to the Bloom filter structure.
+ * @param threshold The saturation threshold (eg: 0.01 - 99.99).
+ *
+ * @return true if the filter was cleared,
+ * @return false if filter was not cleared (filter was under the
+ * saturation threshold).
+ *
+ * TODO: test
+ */
+bool bloom_clear_if_saturation_exceeds(bloomfilter *bf, float threshold) {
+    float saturation = bloom_saturation(bf);
+
+    if (saturation > threshold) {
+        bloom_clear(bf);
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief Estimate the false positive rate of a Bloom filter.
+ *
+ * This function calculates the estimated false positive rate of the
+ * given Bloom filter.
+ *
+ * where:
+ * - `k` is the number of hash functions used (`bf->hashcount`),
+ * - `n` is the number of elements inserted (determined by
+ *    `bloom_saturation_count()` or other methods),
+ * - `m` is the size of the bit array in the Bloom filter (`bf->size`).
+ *
+ * The false positive rate represents the likelihood that a query for
+ * an element that is not in the set will incorrectly return true.
+ *
+ * @param[in] bf Pointer to the Bloom filter structure.
+ *
+ * @return The estimated false positive rate as a floating-point
+ * number between 0 and 1.
+ */
+float bloom_estimate_false_positive_rate(const bloomfilter *bf) {
+	/*
+	 * false positive rate formula: (1 - exp(-kn/m)) ^ k
+	 *
+	 * where:
+	 *     k = hash count
+	 *     n = number of elements
+	 *     m = size of filter
+	 */
+	size_t m = bf->size;
+	size_t n = bloom_saturation_count(bf); // TODO: use insertions instead?
+	size_t k = bf->hashcount;
+
+	float exp_factor = exp(-(float)k * (float)n / (float)m);
+	float fp_rate = pow(1.0f - exp_factor, (float)k);
+
+	return fp_rate;
+}
+
+/**
  * @brief Calculate the capacity of a bloom filter as a percentage
  * based on the expected number of elements and number of insertions.
  *
@@ -193,6 +260,45 @@ double bloom_capacity(const bloomfilter *bf) {
 static inline void calculate_positions(uint64_t position, uint64_t *byte_position, uint8_t *bit_position) {
 	*byte_position = position / 8;
 	*bit_position = position % 8;
+}
+
+/**
+ * @brief Estimate the overlap (intersection) between two Bloom filters.
+ *
+ * This function calculates the ratio of bits set to 1 in both Bloom
+ * filters, providing an estimate of how much their sets overlap. The
+ * result is the percentage of bits set in both filters, giving an
+ * idea of the overlap between the two sets represented by the Bloom
+ * filters.
+ *
+ * The two Bloom filters must have the same size, hash count, and accuracy.
+ *
+ * @param bf1 Pointer to the first Bloom filter.
+ * @param bf2 Pointer to the second Bloom filter.
+ *
+ * @return A percentage between 0.0 and 99.999, representing the
+ *         estimated overlap (intersection) between the two Bloom
+ *         filters.
+ * @return -1.0f on failure (Bloom filters aren't compatible for this
+ *         operation).
+ *
+ * TODO: test
+ */
+float bloom_estimate_intersection(const bloomfilter *bf1, const bloomfilter *bf2) {
+	if (bf1->size != bf2->size ||
+		bf1->hashcount != bf2->hashcount) {
+		return -1.0f; // error.
+	}
+
+	size_t intersection_count = 0;
+	size_t bits_total = bf1->bitmap_size * 8;
+
+	for (size_t i = 0; i < bf1->bitmap_size; i++) {
+		uint8_t intersection_bits = bf1->bitmap[i] & bf2->bitmap[i];
+		intersection_count += bit_count_table[intersection_bits];
+	}
+
+	return ((float)intersection_count / bits_total) * 100.0;
 }
 
 /**
@@ -351,6 +457,52 @@ bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len)
  */
 bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
 	return bloom_lookup_or_add(bf, element, strlen(element));
+}
+
+/**
+ * @brief Add an element to the Bloom filter only if it is not already present.
+ *
+ * This function checks if an element is already present in the Bloom filter.
+ * If the element is not present, it adds the element and increments the
+ * insertion counter.
+ *
+ * @param bf Pointer to the Bloom filter.
+ * @param element Pointer to the element to add.
+ * @param len Length of the element in bytes.
+ *
+ * @return true if the element was already present.
+ * @return false if the element was added to the filter.
+ */
+bool bloom_add_if_not_present(bloomfilter *bf, const void *element, const size_t len) {
+    if (bloom_lookup(bf, element, len)) {
+        return true;
+    }
+
+    bloom_add(bf, element, len);
+    return false;
+}
+
+/**
+ * @brief Add a string element to the Bloom filter only if it is not
+ * already present.
+ *
+ * This function checks if a string element is already present in the
+ * Bloom filter. If the string element is not present, it adds the
+ * element and increments the insertion counter.
+ *
+ * This function is a convenience wrapper around
+ * `bloom_add_if_not_present()` that handles string elements.
+ *
+ * @param bf Pointer to the Bloom filter.
+ * @param element Pointer to the string element to add.
+ *
+ * @return true if the string element was already present.
+ * @return false if the string element was added to the filter.
+ *
+ * @see bloom_add_if_not_present
+ */
+bool bloom_add_if_not_present_string(bloomfilter *bf, const char *element) {
+	return bloom_add_if_not_present(bf, element, strlen(element));
 }
 
 /**
