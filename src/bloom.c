@@ -472,3 +472,97 @@ const char *bloom_strerror(bloom_error_t error) {
 
 	return bloom_errors[error];
 }
+
+/**
+ * @brief Merge two Bloom filters into a result filter.
+ *
+ * This function combines two Bloom filters by taking the logical OR
+ * of their bitmaps. The two Bloom filters must have the same size,
+ * hashcount, and accuracy to be merged.
+ *
+ * @param result A pointer to the Bloom filter to store the merged result.
+ * @param bf1 A pointer to the first Bloom filter.
+ * @param bf2 A pointer to the second Bloom filter.
+ *
+ * @return BF_SUCCESS on successful merge.
+ * @return BF_OUTOFMEMORY if memory allocation fails for the result bitmap.
+ * @return BF_INVALIDFILE if the two Bloom filters are not compatible.
+ *
+ * TODO: test
+ */
+bloom_error_t bloom_merge(bloomfilter *result,
+						  const bloomfilter *bf1,
+						  const bloomfilter *bf2) {
+    if (bf1->size != bf2->size ||
+		bf1->hashcount != bf2->hashcount ||
+		bf1->accuracy != bf2->accuracy) {
+        return BF_INVALIDFILE;
+    }
+
+    result->size        = bf1->size;
+    result->hashcount   = bf1->hashcount;
+    result->accuracy    = bf1->accuracy;
+    result->bitmap_size = bf1->bitmap_size;
+    result->expected    = bf1->expected;
+    result->insertions  = bf1->insertions;
+
+    result->bitmap = calloc(result->bitmap_size, sizeof(uint8_t));
+    if (result->bitmap == NULL) {
+        return BF_OUTOFMEMORY;
+    }
+
+    for (size_t i = 0; i < result->bitmap_size; i++) {
+        result->bitmap[i] = bf1->bitmap[i] | bf2->bitmap[i];
+    }
+
+    result->insertions += bf2->insertions; // TODO consider removing insertions
+
+    return BF_SUCCESS;
+}
+
+/**
+ * @brief Intersect two Bloom filters into a result filter.
+ *
+ * This function combines two Bloom filters by taking the logical AND
+ * of their bitmaps. The two Bloom filters must have the same size,
+ * hashcount, and accuracy to be intersected.
+ *
+ * @param result A pointer to the Bloom filter to store the intersected result.
+ * @param bf1 A pointer to the first Bloom filter.
+ * @param bf2 A pointer to the second Bloom filter.
+ *
+ * @return BF_SUCCESS on successful merge.
+ * @return BF_OUTOFMEMORY if memory allocation fails for the result bitmap.
+ * @return BF_INVALIDFILE if the two Bloom filters are not compatible.
+ *
+ * TODO: test
+ */
+bloom_error_t bloom_intersect(bloomfilter *result,
+							  const bloomfilter *bf1,
+							  const bloomfilter *bf2) {
+    if (bf1->size != bf2->size ||
+		bf1->hashcount != bf2->hashcount ||
+		bf1->accuracy != bf2->accuracy) {
+        return BF_INVALIDFILE;
+    }
+
+    result->size        = bf1->size;
+    result->hashcount   = bf1->hashcount;
+    result->accuracy    = bf1->accuracy;
+    result->bitmap_size = bf1->bitmap_size;
+    result->expected    = bf1->expected;
+    result->insertions  = bf1->insertions;
+
+    result->bitmap = calloc(result->bitmap_size, sizeof(uint8_t));
+    if (result->bitmap == NULL) {
+        return BF_OUTOFMEMORY;
+    }
+
+    for (size_t i = 0; i < result->bitmap_size; i++) {
+        result->bitmap[i] = bf1->bitmap[i] & bf2->bitmap[i];
+    }
+
+    result->insertions += bf2->insertions; // TODO consider removing insertions
+
+    return BF_SUCCESS;
+}

@@ -11,6 +11,8 @@
  * the filter's memory and accuracy parameters.
  *
  * @see bloom.c for the corresponding implementation.
+ *
+ * TODO: file format instead of using the struct
  */
 #ifndef BLOOM_H
 #define BLOOM_H
@@ -25,7 +27,6 @@
 // #else
 // typedef uint64_t (*hash_fun64_t)(const void *key, size_t len, uint64_t seed);
 // #endif /* UINTPTR_MAX */
-
 
 /**
  * @enum bloom_error_t
@@ -140,26 +141,30 @@ typedef struct {
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
 void           bloom_destroy(bloomfilter *);
 void           bloom_clear(bloomfilter *);
+const char    *bloom_strerror(const bloom_error_t);
+bloom_error_t  bloom_save(const bloomfilter *, const char *);
+bloom_error_t  bloom_load(bloomfilter *, const char *);
+bloom_error_t  bloom_merge(bloomfilter *,
+						   const bloomfilter *,
+						   const bloomfilter *);
+bloom_error_t  bloom_intersect(bloomfilter *,
+							   const bloomfilter *,
+							   const bloomfilter *);
+
 size_t         bloom_saturation_count(const bloomfilter *);
 float          bloom_saturation(const bloomfilter *);
-double         bloom_capacity(const bloomfilter *);
+bool bloom_reset_if_saturation_exceeds(bloomfilter *, float threshold);
+float bloom_estimate_false_positive_rate(const bloomfilter *);
+double         bloom_capacity(const bloomfilter *); // TODO consider removal
+
 bool           bloom_lookup(const bloomfilter *, const void *, const size_t);
 bool           bloom_lookup_string(const bloomfilter *, const char *);
 bool           bloom_lookup_or_add(bloomfilter *, const void *, const size_t);
 bool           bloom_lookup_or_add_string(bloomfilter *, const char *);
+
 void           bloom_add(bloomfilter *, const void *, const size_t);
 void           bloom_add_string(bloomfilter *, const char *);
-bloom_error_t  bloom_save(const bloomfilter *, const char *);
-bloom_error_t  bloom_load(bloomfilter *, const char *);
-const char    *bloom_strerror(const bloom_error_t);
+bool bloom_add_if_not_present(bloomfilter *, const void *, const size_t);
+bool bloom_add_if_not_present_string(bloomfilter *, const char *);
 
-/*
- * TODO: potential additions
- * bool bloom_add_if_not_present(bloomfilter *, const void *, const size_t);
- * bool bloom_add_if_not_present_string(bloomfilter *, const char *);
- * bloom_error_t bloom_merge(bloomfilter *, const bloomfilter *); // OR
- * bloom_error_t bloom_intersect(bloomfilter*, const bloomfilter); // AND
- * float bloom_estimate_false_positive_rate(const bloomfilter *);
- * bool bloom_reset_if_saturation_exceeds(bloomfilter *, float threshold);
- */
 #endif /* BLOOM_H */
