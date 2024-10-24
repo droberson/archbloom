@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 # Set the output directory for libraries and executables
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Add source files for the library
 set(SRC_FILES
@@ -13,6 +14,7 @@ set(SRC_FILES
     src/bloom.c
     src/cbloom.c
     src/tdbloom.c
+    src/tdcbloom.c
     src/cuckoo.c
     src/gaussiannb.c
 )
@@ -35,15 +37,17 @@ target_link_libraries(archbloom_shared PUBLIC m)
 
 # Optionally add an example/test program
 add_executable(test_bloom_basic tests/test_bloom_basic.c)
-add_executable(test_tdbloom_basic tests/test_tdbloom_basic.c)
 add_executable(test_cbloom_basic tests/test_cbloom_basic.c)
+add_executable(test_tdbloom_basic tests/test_tdbloom_basic.c)
+add_executable(test_tdcbloom_basic tests/test_tdcbloom_basic.c)
 add_executable(test_cuckoo_basic tests/test_cuckoo_basic.c)
 add_executable(test_gaussiannb_basic tests/test_gaussiannb_basic.c)
 
 # Link the example program with the shared library
 target_link_libraries(test_bloom_basic PRIVATE archbloom_shared)
-target_link_libraries(test_tdbloom_basic PRIVATE archbloom_shared)
 target_link_libraries(test_cbloom_basic PRIVATE archbloom_shared)
+target_link_libraries(test_tdbloom_basic PRIVATE archbloom_shared)
+target_link_libraries(test_tdcbloom_basic PRIVATE archbloom_shared)
 target_link_libraries(test_cuckoo_basic PRIVATE archbloom_shared)
 target_link_libraries(test_gaussiannb_basic PRIVATE archbloom_shared)
 
@@ -53,8 +57,9 @@ install(TARGETS archbloom_shared archbloom_static
 install(FILES
     src/bloom.h
     src/mmh3.h
-    src/tdbloom.h
     src/cbloom.h
+    src/tdbloom.h
+    src/tdcbloom.h
     src/cuckoo.h
     src/gaussiannb.h
     DESTINATION include/archbloom)
@@ -63,8 +68,9 @@ install(CODE "execute_process(COMMAND ldconfig)")
 # Testing
 enable_testing()
 add_test(NAME bloom COMMAND bin/test_bloom_basic)
-add_test(NAME tdbloom COMMAND bin/test_tdbloom_basic)
 add_test(NAME cbloom COMMAND bin/test_cbloom_basic)
+add_test(NAME tdbloom COMMAND bin/test_tdbloom_basic)
+add_test(NAME tdcbloom COMMAND bin/test_tdcbloom_basic)
 add_test(NAME cuckoo COMMAND bin/test_cuckoo_basic)
 add_test(NAME gaussiannb COMMAND bin/test_gaussiannb_basic)
 

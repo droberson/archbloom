@@ -52,6 +52,19 @@ the expense of lower maximum value for the counters. If an application
 doesn't expect to have large values in a counting bloom filter, using
 a smaller width counter will reduce memory costs.
 
+## Time-decaying, counting bloom filters
+
+Time-decaying, counting Bloom filters combine the properties of
+time-decaying and counting Bloom filters. This allows the filter to
+not only track the presence of an element but also how many times the
+element has been seen within a specified time window.
+
+For example, these filters can answer questions such as: "How many
+times have I seen this element in the last thirty minutes?" or "Has
+this element's occurrence rate increased over time?" or "Has this
+element exceeded a threshold in the last N minutes?"
+
+
 ## Cuckoo filters
 
 Cuckoo filters are a similar concept to bloom filters, but implemented
