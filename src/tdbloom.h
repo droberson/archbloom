@@ -90,13 +90,13 @@ tdbloom_error_t  tdbloom_init(tdbloom *,
 void             tdbloom_destroy(tdbloom *);
 void             tdbloom_clear(tdbloom *);
 size_t           tdbloom_clear_expired(tdbloom *);
-size_t           tdbloom_count_expired(tdbloom);
+size_t           tdbloom_count_expired(const tdbloom *);
 void             tdbloom_reset_start_time(tdbloom *);
-float            tdbloom_saturation(const tdbloom);
+float            tdbloom_saturation(const tdbloom *);
 void             tdbloom_add(tdbloom *, const void *, const size_t);
-void             tdbloom_add_string(tdbloom, const char *);
-bool             tdbloom_lookup(const tdbloom, const void *, const size_t);
-bool             tdbloom_lookup_string(const tdbloom, const char *);
+void             tdbloom_add_string(tdbloom *, const char *);
+bool             tdbloom_lookup(const tdbloom *, const void *, const size_t);
+bool             tdbloom_lookup_string(const tdbloom *, const char *);
 bool             tdbloom_has_expired(const tdbloom, const void *, size_t);
 bool             tdbloom_has_expired_string(const tdbloom, const char *);
 bool             tdbloom_reset_if_expired(tdbloom *, const void *, size_t);

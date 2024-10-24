@@ -197,17 +197,17 @@ static void dec_counter(cbloomfilter *cbf, uint64_t position) {
  *
  * TODO: test
  */
-size_t cbloom_count(const cbloomfilter cbf, void *element, size_t len) {
-	uint64_t hashes[cbf.hashcount];
+size_t cbloom_count(const cbloomfilter *cbf, void *element, size_t len) {
+	uint64_t hashes[cbf->hashcount];
 	uint64_t position;
 	uint64_t count = UINT64_MAX;
 
-	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
 
-	for (int i = 0; i < cbf.hashcount; i++) {
-		position = hashes[i] % cbf.size;
+	for (int i = 0; i < cbf->hashcount; i++) {
+		position = hashes[i] % cbf->size;
 
-		uint64_t current_count = get_counter(&cbf, position);
+		uint64_t current_count = get_counter(cbf, position);
 		if (current_count < count) {
 			count = current_count;
 		}
@@ -231,7 +231,7 @@ size_t cbloom_count(const cbloomfilter cbf, void *element, size_t len) {
  * @return A `size_t` value representing the approximate count of the
  * string element in the filter.
  */
-size_t cbloom_count_string(const cbloomfilter cbf, char *element) {
+size_t cbloom_count_string(const cbloomfilter *cbf, char *element) {
 	return cbloom_count(cbf, (uint8_t *)element, strlen(element));
 }
 
@@ -251,16 +251,16 @@ size_t cbloom_count_string(const cbloomfilter cbf, char *element) {
  * @return `true` if the element is likely in the filter.
  * @return `false` if the element is definitely not in the filter.
  */
-bool cbloom_lookup(const cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hashes[cbf.hashcount];
+bool cbloom_lookup(const cbloomfilter *cbf, void *element, const size_t len) {
+	uint64_t hashes[cbf->hashcount];
 	uint64_t position;
 
-	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
 
-	for (int i = 0; i < cbf.hashcount; i++) {
-		position = hashes[i] % cbf.size;
+	for (int i = 0; i < cbf->hashcount; i++) {
+		position = hashes[i] % cbf->size;
 
-		if (get_counter(&cbf,position) == 0) {
+		if (get_counter(cbf, position) == 0) {
 			return false; // element is definitely not in the filter
 		}
 	}
@@ -283,7 +283,7 @@ bool cbloom_lookup(const cbloomfilter cbf, void *element, const size_t len) {
  * @return `true` if the string is likely in the filter.
  * @return `false` if the string is definitely not in the filter.
  */
-bool cbloom_lookup_string(const cbloomfilter cbf, const char *element) {
+bool cbloom_lookup_string(const cbloomfilter *cbf, const char *element) {
 	return cbloom_lookup(cbf, (uint8_t *)element, strlen(element));
 }
 
@@ -298,15 +298,15 @@ bool cbloom_lookup_string(const cbloomfilter cbf, const char *element) {
  * @param element Pointer to the element to add to the filter.
  * @param len Length of the element in bytes.
  */
-void cbloom_add(cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hashes[cbf.hashcount];
+void cbloom_add(cbloomfilter *cbf, void *element, const size_t len) {
+	uint64_t hashes[cbf->hashcount];
 	uint64_t position;
 
-	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
 
-	for (int i = 0; i < cbf.hashcount; i++) {
-		position = hashes[i] % cbf.size;
-		inc_counter(&cbf, position);
+	for (int i = 0; i < cbf->hashcount; i++) {
+		position = hashes[i] % cbf->size;
+		inc_counter(cbf, position);
 	}
 }
 
@@ -321,7 +321,7 @@ void cbloom_add(cbloomfilter cbf, void *element, const size_t len) {
  * @param cbf Counting Bloom filter to use.
  * @param element Pointer to the string to add to the filter.
  */
-void cbloom_add_string(cbloomfilter cbf, const char *element) {
+void cbloom_add_string(cbloomfilter *cbf, const char *element) {
 	cbloom_add(cbf, (uint8_t *)element, strlen(element));
 }
 
@@ -338,24 +338,24 @@ void cbloom_add_string(cbloomfilter cbf, const char *element) {
  * @param element Pointer to the element to remove from the filter.
  * @param len Length of the element in bytes.
  */
-void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
-	uint64_t hashes[cbf.hashcount];
-	uint64_t positions[cbf.hashcount];
+void cbloom_remove(cbloomfilter *cbf, void *element, const size_t len) {
+	uint64_t hashes[cbf->hashcount];
+	uint64_t positions[cbf->hashcount];
 
-	mmh3_64_make_hashes(element, len, cbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
 
 	bool shouldremove = true;
-	for (size_t i = 0; i < cbf.hashcount; i++) {
-		positions[i] = hashes[i] % cbf.size;
-		if (get_counter(&cbf, positions[i]) == 0) {
+	for (size_t i = 0; i < cbf->hashcount; i++) {
+		positions[i] = hashes[i] % cbf->size;
+		if (get_counter(cbf, positions[i]) == 0) {
 			shouldremove = false;
 			break;
 		}
 	}
 
 	if (shouldremove) {
-		for (int i = 0; i < cbf.hashcount; i++) {
-			dec_counter(&cbf, positions[i]);
+		for (int i = 0; i < cbf->hashcount; i++) {
+			dec_counter(cbf, positions[i]);
 		}
 	}
 }
@@ -373,7 +373,7 @@ void cbloom_remove(cbloomfilter cbf, void *element, const size_t len) {
  * @param cbf Counting Bloom filter to use.
  * @param element Pointer to the string to remove from the filter.
  */
-void cbloom_remove_string(cbloomfilter cbf, const char *element) {
+void cbloom_remove_string(cbloomfilter *cbf, const char *element) {
 	cbloom_remove(cbf, (uint8_t *)element, strlen(element));
 }
 
@@ -387,11 +387,11 @@ void cbloom_remove_string(cbloomfilter cbf, const char *element) {
  *
  * TODO: test
  */
-size_t cbloom_saturation_count(const cbloomfilter cbf) {
+size_t cbloom_saturation_count(const cbloomfilter *cbf) {
 	size_t count = 0;
 
-	for (size_t i = 0; i < cbf.size; i++) {
-		if (get_counter(&cbf, i) != 0) {
+	for (size_t i = 0; i < cbf->size; i++) {
+		if (get_counter(cbf, i) != 0) {
 			count++;
 		}
 	}
@@ -413,8 +413,8 @@ size_t cbloom_saturation_count(const cbloomfilter cbf) {
  *
  * TODO: test
  */
-float cbloom_saturation(const cbloomfilter cbf) {
-	return (float)cbloom_saturation_count(cbf) / cbf.size * 100.0;
+float cbloom_saturation(const cbloomfilter *cbf) {
+	return (float)cbloom_saturation_count(cbf) / cbf->size * 100.0;
 }
 
 /**
@@ -449,7 +449,7 @@ void cbloom_clear(cbloomfilter *cbf) {
  * @return CBF_FOPEN if the file could not be opened for writing.
  * @return CBF_FWRITE if there was an error writing to the file.
  */
-cbloom_error_t cbloom_save(cbloomfilter cbf, const char *path) {
+cbloom_error_t cbloom_save(cbloomfilter *cbf, const char *path) {
 	FILE        *fp;
 	struct stat  sb;
 
@@ -458,8 +458,8 @@ cbloom_error_t cbloom_save(cbloomfilter cbf, const char *path) {
 		return CBF_FOPEN;
 	}
 
-	if (fwrite(&cbf, sizeof(cbloomfilter), 1, fp) != 1 ||
-		fwrite(cbf.countermap, cbf.countermap_size, 1, fp) != 1) {
+	if (fwrite(cbf, sizeof(cbloomfilter), 1, fp) != 1 ||
+		fwrite(cbf->countermap, cbf->countermap_size, 1, fp) != 1) {
 		fclose(fp);
 		return CBF_FWRITE;
 	}

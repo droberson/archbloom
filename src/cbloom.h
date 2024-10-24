@@ -86,18 +86,18 @@ typedef struct {
  */
 cbloom_error_t  cbloom_init(cbloomfilter *, const size_t, const float, counter_size);
 void            cbloom_destroy(cbloomfilter *);
-size_t          cbloom_count(const cbloomfilter, void *, size_t);
-size_t          cbloom_count_string(const cbloomfilter, char *);
-bool            cbloom_lookup(const cbloomfilter, void *, const size_t);
-bool            cbloom_lookup_string(const cbloomfilter, const char *);
-void            cbloom_add(cbloomfilter, void *, const size_t);
-void            cbloom_add_string(cbloomfilter, const char *);
-void            cbloom_remove(cbloomfilter, void *, const size_t);
-void            cbloom_remove_string(cbloomfilter, const char *);
+size_t          cbloom_count(const cbloomfilter *, void *, size_t);
+size_t          cbloom_count_string(const cbloomfilter *, char *);
+bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
+bool            cbloom_lookup_string(const cbloomfilter *, const char *);
+void            cbloom_add(cbloomfilter *, void *, const size_t);
+void            cbloom_add_string(cbloomfilter *, const char *);
+void            cbloom_remove(cbloomfilter *, void *, const size_t);
+void            cbloom_remove_string(cbloomfilter *, const char *);
 void            cbloom_clear(cbloomfilter *);
-size_t          cbloom_saturation_count(const cbloomfilter);
-float           cbloom_saturation(const cbloomfilter);
-cbloom_error_t  cbloom_save(cbloomfilter, const char *);
+size_t          cbloom_saturation_count(const cbloomfilter *);
+float           cbloom_saturation(const cbloomfilter *);
+cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
 cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
 const char     *cbloom_strerror(cbloom_error_t);
 

@@ -214,22 +214,22 @@ size_t tdbloom_clear_expired(tdbloom *tdbf) {
  *
  * @return The number of expired items in the filter.
  */
-size_t tdbloom_count_expired(const tdbloom tdbf) {
+size_t tdbloom_count_expired(const tdbloom *tdbf) {
 	time_t now = get_monotonic_time();
-	size_t ts = ((now - tdbf.start_time + tdbf.max_time) % tdbf.max_time) + 1;
+	size_t ts = ((now - tdbf->start_time + tdbf->max_time) % tdbf->max_time) + 1;
 	size_t expired = 0;
 
-	for (size_t i = 0; i < tdbf.size; i++) {
+	for (size_t i = 0; i < tdbf->size; i++) {
 		uint64_t value;
-		switch (tdbf.bytes) {
-		case 1: value = ((uint8_t *)tdbf.filter)[i];  break;
-		case 2: value = ((uint16_t *)tdbf.filter)[i]; break;
-		case 4: value = ((uint32_t *)tdbf.filter)[i]; break;
-		case 8: value = ((uint64_t *)tdbf.filter)[i]; break;
+		switch (tdbf->bytes) {
+		case 1: value = ((uint8_t *)tdbf->filter)[i];  break;
+		case 2: value = ((uint16_t *)tdbf->filter)[i]; break;
+		case 4: value = ((uint32_t *)tdbf->filter)[i]; break;
+		case 8: value = ((uint64_t *)tdbf->filter)[i]; break;
 		}
 
 		// set to 0 if expired
-		if (value != 0 && ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+		if (value != 0 && ((ts - value + tdbf->max_time) % tdbf->max_time) > tdbf->timeout) {
 			expired++;
 		}
 	}
@@ -250,26 +250,26 @@ size_t tdbloom_count_expired(const tdbloom tdbf) {
  *
  * TODO: test this
  */
-float tdbloom_saturation(const tdbloom tdbf) {
+float tdbloom_saturation(const tdbloom *tdbf) {
 	size_t irrelevant = 0;
 	time_t now = get_monotonic_time();
-	size_t ts = ((now - tdbf.start_time + tdbf.max_time) % tdbf.max_time) + 1;
+	size_t ts = ((now - tdbf->start_time + tdbf->max_time) % tdbf->max_time) + 1;
 
-	for (size_t i = 0; i < tdbf.size; i++) {
+	for (size_t i = 0; i < tdbf->size; i++) {
 		size_t value;
-		switch(tdbf.bytes) {
-		case 1: value = ((uint8_t *)tdbf.filter)[i]; break;
-		case 2: value = ((uint16_t *)tdbf.filter)[i]; break;
-		case 4: value = ((uint32_t *)tdbf.filter)[i]; break;
-		case 8: value = ((uint64_t *)tdbf.filter)[i]; break;
+		switch(tdbf->bytes) {
+		case 1: value = ((uint8_t *)tdbf->filter)[i]; break;
+		case 2: value = ((uint16_t *)tdbf->filter)[i]; break;
+		case 4: value = ((uint32_t *)tdbf->filter)[i]; break;
+		case 8: value = ((uint64_t *)tdbf->filter)[i]; break;
 		}
 
-		if (value == 0 || ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+		if (value == 0 || ((ts - value + tdbf->max_time) % tdbf->max_time) > tdbf->timeout) {
 			irrelevant++;
 		}
 	}
 
-	float saturation = 1.0 - ((float)irrelevant / tdbf.size);
+	float saturation = 1.0 - ((float)irrelevant / tdbf->size);
 	return saturation * 100;
 }
 
@@ -313,8 +313,8 @@ void tdbloom_add(tdbloom *tf, const void *element, const size_t len) {
  * @param tdbf Time-decaying Bloom filter to add the string element to.
  * @param element Pointer to the string element to add to the filter.
  */
-void tdbloom_add_string(tdbloom tdbf, const char *element) {
-	tdbloom_add(&tdbf, (uint8_t *)element, strlen(element));
+void tdbloom_add_string(tdbloom *tdbf, const char *element) {
+	tdbloom_add(tdbf, (uint8_t *)element, strlen(element));
 }
 
 /**
@@ -331,29 +331,29 @@ void tdbloom_add_string(tdbloom tdbf, const char *element) {
  * @return true if the element is likely in the filter and valid
  * @return false if it is definitely not in the filter or has expired.
  */
-bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
+bool tdbloom_lookup(const tdbloom *tdbf, const void *element, const size_t len) {
 	uint64_t    result;
-	uint64_t    hashes[tdbf.hashcount];
+	uint64_t    hashes[tdbf->hashcount];
 	time_t      now = get_monotonic_time();
-	size_t      ts = ((now - tdbf.start_time) % tdbf.max_time + tdbf.max_time) % tdbf.max_time + 1;
+	size_t      ts = ((now - tdbf->start_time) % tdbf->max_time + tdbf->max_time) % tdbf->max_time + 1;
 
-	if ((now - tdbf.start_time) > tdbf.max_time) { return false; }
+	if ((now - tdbf->start_time) > tdbf->max_time) { return false; }
 
-	mmh3_64_make_hashes(element, len, tdbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, tdbf->hashcount, hashes);
 
-	for (int i = 0; i < tdbf.hashcount; i++) {
-		result = hashes[i] % tdbf.size;
+	for (int i = 0; i < tdbf->hashcount; i++) {
+		result = hashes[i] % tdbf->size;
 
 		size_t value;
-		switch(tdbf.bytes) {
-		case 1:	value = ((uint8_t *)tdbf.filter)[result];  break;
-		case 2:	value = ((uint16_t *)tdbf.filter)[result]; break;
-		case 4:	value = ((uint32_t *)tdbf.filter)[result]; break;
-		case 8:	value = ((uint64_t *)tdbf.filter)[result]; break;
+		switch(tdbf->bytes) {
+		case 1:	value = ((uint8_t *)tdbf->filter)[result];  break;
+		case 2:	value = ((uint16_t *)tdbf->filter)[result]; break;
+		case 4:	value = ((uint32_t *)tdbf->filter)[result]; break;
+		case 8:	value = ((uint64_t *)tdbf->filter)[result]; break;
 		}
 
 		if (value == 0 ||
-			((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+			((ts - value + tdbf->max_time) % tdbf->max_time) > tdbf->timeout) {
 			return false;
 		}
 	}
@@ -374,7 +374,7 @@ bool tdbloom_lookup(const tdbloom tdbf, const void *element, const size_t len) {
  * @return true if the element is likely in the filter and valid
  * @return false if it is definitely not in the filter or has expired.
  */
-bool tdbloom_lookup_string(const tdbloom tdbf, const char *element) {
+bool tdbloom_lookup_string(const tdbloom *tdbf, const char *element) {
 	return tdbloom_lookup(tdbf, (uint8_t *)element, strlen(element));
 }
 
