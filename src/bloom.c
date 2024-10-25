@@ -1,6 +1,7 @@
 /**
  * @file bloom.c
  * @brief Bloom filter implementation.
+ * @author Daniel Roberson
  *
  * This file contains functions for working with Bloom filters,
  * including initialization, destruction, insertion, querying, and
@@ -667,7 +668,7 @@ bloom_error_t bloom_merge(bloomfilter *result,
         result->bitmap[i] = bf1->bitmap[i] | bf2->bitmap[i];
     }
 
-    result->insertions += bf2->insertions; // TODO consider removing insertions
+    //result->insertions += bf2->insertions; // TODO consider removing insertions
 
     return BF_SUCCESS;
 }
