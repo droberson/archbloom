@@ -1,6 +1,7 @@
 /**
  * @file cbloom.h
  * @brief Header file for the counting Bloom filter implementation.
+ * @author Daniel Roberson
  *
  * This file contains the declarations for the counting Bloom filter
  * functions and data structures. The counting Bloom filter allows
@@ -102,10 +103,18 @@ cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
 const char     *cbloom_strerror(cbloom_error_t);
 
 /*
+ * TODO: 4 bit counters
  * TODO: potential additions
  * float cbloom_get_average_count(cbloomfilter);
  * bool cbloom_remove_if_count_above(cbloomfilter *, const void *, size_t threshold, size_t len);
  * bool cbloom_reset_element(cbloomflilter *, const void *element, size_t len);
  * size_t cbloom_count_elements_above_threshold(const cbloomfilter, size_t threshold);
+ *
+ * "In practice, when a counter does overflow, one approach is to
+ * leave it at its maximum value. This can cause a later false
+ * negative only if eventually the counter goes down to 0 when it
+ * should have remained nonzero. If the deletions are random, the
+ * expected time to this event is relatively large." - Broder &
+ * Mitzenmacher
 */
 #endif /* CBLOOM_H */
