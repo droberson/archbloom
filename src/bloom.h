@@ -164,6 +164,8 @@ void           bloom_clear(bloomfilter *);
 const char    *bloom_strerror(const bloom_error_t);
 bloom_error_t  bloom_save(const bloomfilter *, const char *);
 bloom_error_t  bloom_load(bloomfilter *, const char *);
+bloom_error_t  bloom_save_fd(const bloomfilter *, int);
+bloom_error_t  bloom_load_fd(bloomfilter *, int);
 bloom_error_t  bloom_merge(bloomfilter *,
 						   const bloomfilter *,
 						   const bloomfilter *);

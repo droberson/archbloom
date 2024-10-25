@@ -52,8 +52,6 @@ static size_t ideal_size(const size_t expected, const float accuracy) {
  *
  * @return BF_SUCCESS on successful initialization.
  * @return BF_OUTOFMEMORY if memory allocation fails.
- *
- * TODO: test
  */
 bloom_error_t bloom_init(bloomfilter *bf, const size_t expected, const float accuracy) {
 	bf->size        = ideal_size(expected, accuracy);
@@ -90,8 +88,6 @@ void bloom_destroy(bloomfilter *bf) {
  * This function empties the Bloom filter, setting all bits to zero.
  *
  * @param bf Pointer to the Bloom filter to clear.
- *
- * TODO: test
  */
 void bloom_clear(bloomfilter *bf) {
 	memset(bf->bitmap, 0, bf->bitmap_size);
@@ -490,8 +486,6 @@ bool bloom_add_if_not_present_string(bloomfilter *bf, const char *element) {
  * @return BF_SUCCESS on success.
  * @return BF_FOPEN if unable to open the file.
  * @return BF_FWRITE if unable to write to the file.
- *
- * TODO: test
  */
 bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	FILE             *fp;
@@ -514,7 +508,7 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	// TODO copy name
 
 	fp = fopen(path, "wb");
-	if (fp == NULL) {
+	if (fp == NULL) { // TODO test
 		return BF_FOPEN;
 	}
 
@@ -595,6 +589,106 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	fclose(fp);
 
 	return BF_SUCCESS;
+}
+
+/**
+ * @brief Saves a Bloom filter to a file descriptor.
+ *
+ * This function saves the Bloom filter to a file descriptor.
+ * The file format contains two sections:
+ *
+ * 1. The bloomfilter_file structure.
+ * 2. The bitmap data.
+ *
+ * @param bf Bloom filter to save to disk.
+ * @param fd File descriptor to write the Bloom filter to.
+ *
+ * @return BF_SUCCESS on success.
+ * @return BF_FWRITE if unable to write to the file descriptor.
+ *
+ * @note This does not open or close the file descriptor. As such, it
+ *       is the developer's responsibility to manage these.
+ */
+bloom_error_t bloom_save_fd(const bloomfilter *bf, int fd) {
+    bloomfilter_file bff = {0};
+
+    bff.magic[0] = '!';
+    bff.magic[1] = 'b';
+    bff.magic[2] = 'l';
+    bff.magic[3] = 'o';
+    bff.magic[4] = 'o';
+    bff.magic[5] = 'm';
+    bff.magic[6] = 'f';
+    bff.magic[7] = '!';
+
+    bff.size = bf->size;
+    bff.hashcount = bf->hashcount;
+    bff.bitmap_size = bf->bitmap_size;
+    bff.expected = bf->expected;
+    bff.accuracy = bf->accuracy;
+
+    if (write(fd, &bff, sizeof(bloomfilter_file)) != sizeof(bloomfilter_file)) {
+        return BF_FWRITE;
+    }
+
+    if (write(fd, bf->bitmap, bf->bitmap_size) != (ssize_t)bf->bitmap_size) {
+        return BF_FWRITE;
+    }
+
+    return BF_SUCCESS;
+}
+
+/**
+ * @brief Load a Bloom filter from a file descriptor.
+ *
+ * This function reads a Bloom filter from a file descriptor and initializes
+ * the Bloom filter object.
+ *
+ * @param bf Pointer to the Bloom filter object to initialize.
+ * @param fd File descriptor to read the Bloom filter from.
+ *
+ * @return BF_SUCCESS on success.
+ * @return BF_FREAD if unable to read from the file descriptor.
+ * @return BF_FSTAT if fstat() fails.
+ * @return BF_INVALIDFILE if the file is invalid.
+ * @return BF_OUTOFMEMORY if memory allocation fails.
+ */
+bloom_error_t bloom_load_fd(bloomfilter *bf, int fd) {
+	struct stat      sb;
+	bloomfilter_file bff;
+
+	if (fstat(fd, &sb) == -1) {
+		return BF_FSTAT;
+	}
+
+	if (read(fd, &bff, sizeof(bloomfilter_file)) != sizeof(bloomfilter_file)) {
+        return BF_FREAD;
+    }
+
+    bf->size = bff.size;
+    bf->hashcount = bff.hashcount;
+    bf->bitmap_size = bff.bitmap_size;
+    bf->expected = bff.expected;
+    bf->accuracy = bff.accuracy;
+
+    // Basic sanity check: verify if file structure is valid
+    if ((bf->size / 8) != bf->bitmap_size ||
+        sizeof(bloomfilter_file) + bf->bitmap_size != (size_t)sb.st_size) {
+        return BF_INVALIDFILE;
+    }
+
+    bf->bitmap = malloc(bf->bitmap_size);
+    if (bf->bitmap == NULL) {
+        return BF_OUTOFMEMORY;
+    }
+
+    if (read(fd, bf->bitmap, bf->bitmap_size) != (ssize_t)bf->bitmap_size) {
+        free(bf->bitmap);
+        bf->bitmap = NULL;
+        return BF_FREAD;
+    }
+
+    return BF_SUCCESS;
 }
 
 /**

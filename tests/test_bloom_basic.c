@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+#include <limits.h>
+#include <errno.h>
 
 #include "bloom.h"
 
@@ -58,14 +61,22 @@ int main() {
 	printf("\n");
 
 	// Save to file
-	// TODO: randomize /tmp filenames
-	printf("attempting to save filter to /tmp/bloom\n");
-	bloom_save(&bf, "/tmp/bloom");
+	char tmp_file_name[] = "/tmp/bloom.XXXXXX";
+	int fd = mkstemp(tmp_file_name);
+	if (fd == -1) {
+		fprintf(stderr, "FAILURE: unable to create tmp file: %s -- %s\n",
+				tmp_file_name,
+				strerror(errno));
+		return EXIT_FAILURE;
+	}
+	printf("attempting to save filter to %s\n", tmp_file_name);
+	bloom_save_fd(&bf, fd);
+	close(fd);
 	bloom_destroy(&bf);
 
 	// Load from file
 	bloomfilter newbloom;
-	bloom_load(&newbloom, "/tmp/bloom");
+	bloom_load(&newbloom, tmp_file_name);
 
 	printf("size: %d\n", newbloom.size);
 	printf("hashcount: %d\n", newbloom.hashcount);
@@ -105,10 +116,41 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	// test clearing filter
+	printf("testing clearing the filter\n");
+	bloom_clear(&newbloom);
+	result = bloom_lookup_string(&newbloom, "asdf");
+	if (result != false) {
+		fprintf(stderr, "FAILURE: \"asdf\" should NOT be in filter\n");
+		return EXIT_FAILURE;
+	}
+
+	// test saturation count
+	size_t saturation = bloom_saturation_count(&newbloom);
+	printf("saturation count: %zd\n", saturation);
+	if (saturation != 0) {
+		fprintf(stderr, "FAILURE: saturation should be 0\n");
+		return EXIT_FAILURE;
+	}
+
+	char buf[32];
+	for (size_t i = 0; i < newbloom.expected / 2; i++) {
+		snprintf(buf, sizeof(buf), "%zd", i);
+		bloom_add_string(&newbloom, buf);
+	}
+	saturation = bloom_saturation_count(&newbloom);
+	printf("half saturation: %zd/%zd\n", saturation, newbloom.size);
+
+	for (size_t i = 0; i < newbloom.expected / 2; i++) {
+		snprintf(buf, sizeof(buf), "%zd", i + (newbloom.expected / 2));
+		bloom_add_string(&newbloom, buf);
+	}
+	saturation = bloom_saturation_count(&newbloom);
+	printf("full saturation: %zd/%zd\n", saturation, newbloom.size);
+
 	// Cleanup
 	bloom_destroy(&newbloom);
-
-	remove("/tmp/bloom");
+	remove(tmp_file_name);
 
 	return EXIT_SUCCESS;
 }
