@@ -1,9 +1,10 @@
 /**
  * @file tdcbloom.c
+ * @brief Time-decaying, counting Bloom filters.
+ * @author Daniel Roberson
  *
  * This is a time-decaying, counting Bloom filter implementation.
  */
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -296,6 +297,7 @@ void tdcbloom_reset_start_time(tdcbloom *tdcbf) {
  * can be relatively expensive for large filters, as it involves
  * scanning and adjusting each entry.
  *
+ * TODO: lazy expiration
  * TODO: test
  */
 void  tdcbloom_adjust_timeout(tdcbloom *tdcbf, size_t new_timeout) {
