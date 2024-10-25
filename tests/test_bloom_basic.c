@@ -51,7 +51,6 @@ int main() {
 	}
 
 	// Hex dump the bitmap
-	printf("occupancy: %lf %d\n", bloom_capacity(&bf), bf.insertions);
 	printf("filter hex dump: ");
 	for (size_t i = 0; i < bf.bitmap_size; i++) {
 		printf("%02x ", bf.bitmap[i]);

@@ -106,23 +106,17 @@ const char *bloom_errors[] = {
  * @var bloomfilter::expected
  * Expected number of elements the filter will hold.
  *
- * @var bloomfilter::insertions
- * Number of elements inserted into the filter.
- *
  * @var bloomfilter::accuracy
  * Desired margin of error (e.g., 0.01 represents 99.99% accuracy).
  *
  * @var bloomfilter::bitmap
  * Pointer to the bitmap used to represent the Bloom filter.
- *
- * TODO: specify hash function?
  */
 typedef struct {
 	size_t   size;              /**< Size of the Bloom filter in bits */
 	size_t   hashcount;         /**< Number of hashes performed per element */
 	size_t   bitmap_size;       /**< Size of the bitmap in bytes */
 	size_t   expected;          /**< Expected capacity of the filter */
-	size_t   insertions;        /**< Insertions counter */
 	float    accuracy;          /**< Desired margin of error */
 	uint8_t *bitmap;            /**< Pointer to the bitmap of the filter */
 } bloomfilter;
@@ -149,9 +143,6 @@ typedef struct {
  * @var bloomfilter_file::expected
  * Expected number of elements the Bloom filter is configured to hold.
  *
- * @var bloomfilter_file::insertions
- * Current number of elements inserted into the Bloom filter.
- *
  * @var bloomfilter_file::accuracy
  * Desired false positive rate, where 0.01 represents 99% accuracy.
  */
@@ -162,7 +153,6 @@ typedef struct {
 	uint64_t hashcount;
 	uint64_t bitmap_size;
 	uint64_t expected;
-	uint64_t insertions;
 	float    accuracy;
 } bloomfilter_file;
 
@@ -187,7 +177,6 @@ float          bloom_saturation(const bloomfilter *);
 bool           bloom_clear_if_saturation_exceeds(bloomfilter *,
 												 float threshold);
 float          bloom_estimate_false_positive_rate(const bloomfilter *);
-double         bloom_capacity(const bloomfilter *); // TODO consider removal
 
 bool           bloom_lookup(const bloomfilter *, const void *, const size_t);
 bool           bloom_lookup_string(const bloomfilter *, const char *);

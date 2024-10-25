@@ -61,7 +61,6 @@ bloom_error_t bloom_init(bloomfilter *bf, const size_t expected, const float acc
 	bf->bitmap_size = bf->size / 8;
 	bf->expected    = expected;
 	bf->accuracy    = accuracy;
-	bf->insertions  = 0;
 
 	bf->bitmap      = calloc(bf->bitmap_size, sizeof(uint8_t));
 	if (bf->bitmap == NULL) {
@@ -86,10 +85,9 @@ void bloom_destroy(bloomfilter *bf) {
 }
 
 /**
- * @brief Clear the contents of a Bloom filter and it's insertion counter.
+ * @brief Clear the contents of a Bloom filter..
  *
- * This function empties the Bloom filter and resets the counter that
- * tracks the number of insertions performed on the filter.
+ * This function empties the Bloom filter, setting all bits to zero.
  *
  * @param bf Pointer to the Bloom filter to clear.
  *
@@ -97,7 +95,6 @@ void bloom_destroy(bloomfilter *bf) {
  */
 void bloom_clear(bloomfilter *bf) {
 	memset(bf->bitmap, 0, bf->bitmap_size);
-	bf->insertions = 0;
 }
 
 // lookup table for bloom_saturation() and bloom_saturation_count()
@@ -221,31 +218,13 @@ float bloom_estimate_false_positive_rate(const bloomfilter *bf) {
 	 *     m = size of filter
 	 */
 	size_t m = bf->size;
-	size_t n = bloom_saturation_count(bf); // TODO: use insertions instead?
+	size_t n = bloom_saturation_count(bf);
 	size_t k = bf->hashcount;
 
 	float exp_factor = exp(-(float)k * (float)n / (float)m);
 	float fp_rate = pow(1.0f - exp_factor, (float)k);
 
 	return fp_rate;
-}
-
-/**
- * @brief Calculate the capacity of a bloom filter as a percentage
- * based on the expected number of elements and number of insertions.
- *
- * This function returns the used capacity of the Bloom filter based
- * on the number of insertions and expected number of elements,
- * expressed as a percentage.
- *
- * @param bf Bloom filter to check capacity of.
- *
- * @return A double representing the used capacity of the bloom filter.
- *
- * TODO: is this function worthwhile? seems like saturation is a better measure
- */
-double bloom_capacity(const bloomfilter *bf) {
-	return ((double)bf->insertions / (double)bf->expected) * 100.0;
 }
 
 /**
@@ -375,15 +354,7 @@ void bloom_add(bloomfilter *bf, const void *element, const size_t len) {
 
 		calculate_positions(result, &byte_position, &bit_position);
 
-		if ((bf->bitmap[byte_position] & (0x01 << bit_position)) == 0) {
-			all_bits_set = false;
-		}
-
 		bf->bitmap[byte_position] |= (0x01 << bit_position);
-	}
-
-	if (all_bits_set == false) {
-		bf->insertions += 1;
 	}
 }
 
@@ -434,7 +405,6 @@ bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len)
 	}
 
 	if (found_all == false) {
-		bf->insertions += 1;
 		return false; // element has been added to filter
 	}
 
@@ -464,8 +434,7 @@ bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
  * @brief Add an element to the Bloom filter only if it is not already present.
  *
  * This function checks if an element is already present in the Bloom filter.
- * If the element is not present, it adds the element and increments the
- * insertion counter.
+ * If the element is not present, it adds the element.
  *
  * @param bf Pointer to the Bloom filter.
  * @param element Pointer to the element to add.
@@ -489,7 +458,7 @@ bool bloom_add_if_not_present(bloomfilter *bf, const void *element, const size_t
  *
  * This function checks if a string element is already present in the
  * Bloom filter. If the string element is not present, it adds the
- * element and increments the insertion counter.
+ * element..
  *
  * This function is a convenience wrapper around
  * `bloom_add_if_not_present()` that handles string elements.
@@ -541,7 +510,6 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	bff.hashcount   = bf->hashcount;
 	bff.bitmap_size = bf->bitmap_size;
 	bff.expected    = bf->expected;
-	bff.insertions  = bf->insertions;
 	bff.accuracy    = bf->accuracy;
 	// TODO copy name
 
@@ -602,7 +570,6 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	bf->hashcount   = bff.hashcount;
 	bf->bitmap_size = bff.bitmap_size;
 	bf->expected    = bff.expected;
-	bf->insertions  = bff.insertions;
 	bf->accuracy    = bff.accuracy;
 
 	// basic sanity check. should fail if filter isn't valid
@@ -683,7 +650,6 @@ bloom_error_t bloom_merge(bloomfilter *result,
     result->accuracy    = bf1->accuracy;
     result->bitmap_size = bf1->bitmap_size;
     result->expected    = bf1->expected;
-    result->insertions  = bf1->insertions;
 
     result->bitmap = calloc(result->bitmap_size, sizeof(uint8_t));
     if (result->bitmap == NULL) {
@@ -693,8 +659,6 @@ bloom_error_t bloom_merge(bloomfilter *result,
     for (size_t i = 0; i < result->bitmap_size; i++) {
         result->bitmap[i] = bf1->bitmap[i] | bf2->bitmap[i];
     }
-
-    //result->insertions += bf2->insertions; // TODO consider removing insertions
 
     return BF_SUCCESS;
 }
@@ -730,7 +694,6 @@ bloom_error_t bloom_intersect(bloomfilter *result,
     result->accuracy    = bf1->accuracy;
     result->bitmap_size = bf1->bitmap_size;
     result->expected    = bf1->expected;
-    result->insertions  = bf1->insertions;
 
     result->bitmap = calloc(result->bitmap_size, sizeof(uint8_t));
     if (result->bitmap == NULL) {
@@ -740,8 +703,6 @@ bloom_error_t bloom_intersect(bloomfilter *result,
     for (size_t i = 0; i < result->bitmap_size; i++) {
         result->bitmap[i] = bf1->bitmap[i] & bf2->bitmap[i];
     }
-
-    //result->insertions += bf2->insertions; // TODO consider removing insertions
 
     return BF_SUCCESS;
 }
