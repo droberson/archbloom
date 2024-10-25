@@ -918,13 +918,13 @@ size_t tdcbloom_age_and_remove(tdcbloom *tdcbf, size_t max_age) {
 }
 
 /**  
- *
+ * TODO: implement tdcbloom_save()
  */
 tdcbloom_error_t tdcbloom_save(const tdcbloom *tdcbf, const char *path) {
 }
 
 /**  
- *
+ * TODO: implement tdcbloom_load()
  */
 tdcbloom_error_t tdcbloom_load(tdcbloom *tdcbf, const char *path) {
 }

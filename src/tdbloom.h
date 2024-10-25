@@ -1,6 +1,7 @@
 /**
  * @file tdbloom.h
  * @brief Header file for the time-decaying Bloom filter implementation.
+ * @author Daniel Roberson
  *
  * This header file contains the declarations of functions and
  * structures for the time-decaying Bloom filter. The time-decaying

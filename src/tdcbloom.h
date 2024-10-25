@@ -1,6 +1,7 @@
 /**
  * @file tdcbloom.h
  * @brief Header file for time-decaying, counting Bloom filter implementation.
+ * @author Daniel Roberson
  *
  * This header file contains the declarations of functions and
  * structures for a time-decaying, counting Bloom filter. This type of

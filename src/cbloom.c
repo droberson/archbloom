@@ -1,6 +1,7 @@
 /**
  * @file cbloom.c
  * @brief Implementation of a counting Bloom filter.
+ * @author Daniel Roberson
  *
  * This file contains the implementation of a counting Bloom filter,
  * which allows for approximate membership checks and supports element

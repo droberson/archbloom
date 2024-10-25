@@ -1,6 +1,7 @@
 /**
  * @file tdbloom.c
- * @brief Implementation of a time-decaying Bloom filter.
+ * @brief Time-decaying Bloom filters.
+ * @author Daniel Roberson
  *
  * This file contains the implementation of a time-decaying Bloom
  * filter, which allows for approximate membership checks where
