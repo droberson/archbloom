@@ -95,6 +95,9 @@ if(DOXYGEN_FOUND)
 
 	# Install documentation
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION ${CMAKE_INSTALL_DOCDIR})
+	# TODO compress manpages
+	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${CMAKE_INSTALL_MANDIR})
+
     endif()
 else()
     message(STATUS "Doxygen not found. Not building documentation.")

@@ -1,9 +1,12 @@
 # Doxyfile template
 PROJECT_NAME           = "@PROJECT_NAME@"
 PROJECT_NUMBER         = "@PROJECT_VERSION@"
+PROJECT_BRIEF          = "@PROJECT_NAME@ @PROJECT_VERSION@ by Daniel Roberson"
 OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@"
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
+GENERATE_MAN           = YES
+MAN_OUTPUT             = man
 INPUT                  = "@PROJECT_SOURCE_DIR@/src"
 RECURSIVE              = YES
 EXTRACT_ALL            = YES
