@@ -17,14 +17,27 @@ False positives are possible with bloom filters, but false negatives
 are not. Bloom filters can be used to represent large datasets in a
 small amount of space, with fast lookups and insertions of elements.
 
-Bloom filters have been used to implement caches, spell checkers, and
-more.
+Bloom filters have been used to implement databases, caches, word
+hyphenation algorithms and spell checkers, and more.
+
+The Bloom filter principle: Wherever a list or set is used, and space
+is at a premium, consider using a Bloom filter if the effect of false
+positives can be mitigated. -- Broder & Mitzenmacher
 
 This blog post gives a great explanation with visual aids to
 understand these data structures: https://samwho.dev/bloom-filters/
 
-https://en.wikipedia.org/wiki/Bloom_filter
+The Wikipedia article for Bloom filters was helpful to me for initial
+understanding and implementation: https://en.wikipedia.org/wiki/Bloom_filter
 
+The original paper by Burton H. Bloom, written in 1970, titled
+"Space/Time Trade-offs in Hash Coding with Allowable Errors" can be
+found here: https://dl.acm.org/doi/pdf/10.1145/362686.362692
+
+"Network Applications of Bloom Filters: A Survey" by Andrei Broder and
+Michael Mitzenmacher was also instrumental to helping me understand
+these data structures and the problems they can be used to solve:
+https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf
 
 ## Time-decaying bloom filters
 
@@ -52,7 +65,7 @@ the expense of lower maximum value for the counters. If an application
 doesn't expect to have large values in a counting bloom filter, using
 a smaller width counter will reduce memory costs.
 
-## Time-decaying, counting bloom filters
+## Time-decaying, counting Bloom filters
 
 Time-decaying, counting Bloom filters combine the properties of
 time-decaying and counting Bloom filters. This allows the filter to
@@ -64,8 +77,35 @@ times have I seen this element in the last thirty minutes?" or "Has
 this element's occurrence rate increased over time?" or "Has this
 element exceeded a threshold in the last N minutes?"
 
+## Count-Min Sketch
+
+NOT IMPLEMENTED YET.
+
+Count-Min Sketch is used for approximating frequency of elements and
+suitable for use on streaming data. Count-Min Sketch can answer how
+many times an element has been seen, with the potential of slight
+overcounting, but never undercounting.
+
+These can be used to answer questions such as "How many times has this
+domain name been seen?"
+
+## Spectral Bloom Filters
+
+NOT IMPLEMENTED YET.
+
+Spectral Bloom Filters are designed to determine multi-set membership
+and approximate counts of elements within several sets. These allow
+for estimation of frequency or multiplicity of elements rather than
+existence or count as provided by normal Bloom filters and counting
+Bloom filters.
+
+These are remarkably similar to counting Bloom filters, but have
+different logic for updating counters, querying the filter,
+removing/decreasing elements, and methods of managing collisions.
 
 ## Cuckoo filters
+
+PARTIALLY IMPLEMENTED.
 
 Cuckoo filters are a similar concept to bloom filters, but implemented
 with a different strategy. In some cases, they may be more
@@ -73,6 +113,8 @@ space-efficient or performant than a bloom filter. Cuckoo filters also
 support deletion, whereas bloom filters do not.
 
 ## Naive Bayes
+
+PARTIALLY IMPLEMENTED.
 
 Naive Bayes can be used to "classify" data using probability
 techniques. Example use cases of a Naive Bayes classifier would be
