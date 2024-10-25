@@ -512,7 +512,7 @@ bool bloom_add_if_not_present_string(bloomfilter *bf, const char *element) {
  * This function saves the Bloom filter to a file on disk. The file
  * contains two sections:
  *
- * 1. The Bloom filter structure.
+ * 1. The bloomfilter_file structure.
  * 2. The bitmap data.
  *
  * @param bf Bloom filter to save to disk.
@@ -525,14 +525,32 @@ bool bloom_add_if_not_present_string(bloomfilter *bf, const char *element) {
  * TODO: test
  */
 bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
-	FILE *fp;
+	FILE             *fp;
+	bloomfilter_file  bff = {0};
+
+	bff.magic[0] = '!';
+	bff.magic[1] = 'b';
+	bff.magic[2] = 'l';
+	bff.magic[3] = 'o';
+	bff.magic[4] = 'o';
+	bff.magic[5] = 'm';
+	bff.magic[6] = 'f';
+	bff.magic[7] = '!';
+
+	bff.size        = bf->size;
+	bff.hashcount   = bf->hashcount;
+	bff.bitmap_size = bf->bitmap_size;
+	bff.expected    = bf->expected;
+	bff.insertions  = bf->insertions;
+	bff.accuracy    = bf->accuracy;
+	// TODO copy name
 
 	fp = fopen(path, "wb");
 	if (fp == NULL) {
 		return BF_FOPEN;
 	}
 
-	if (fwrite(bf, sizeof(bloomfilter), 1, fp) != 1 ||
+	if (fwrite(&bff, sizeof(bloomfilter_file), 1, fp) != 1 ||
 		fwrite(bf->bitmap, bf->bitmap_size, 1, fp) != 1) {
 		fclose(fp);
 		return BF_FWRITE;
@@ -561,8 +579,9 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
  * TODO: test various edge cases
  */
 bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
-	FILE        *fp;
-	struct stat  sb;
+	FILE             *fp;
+	struct stat       sb;
+	bloomfilter_file  bff;
 
 	fp = fopen(path, "rb");
 	if (fp == NULL) {
@@ -574,14 +593,21 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 		return BF_FSTAT;
 	}
 
-	if (fread(bf, sizeof(bloomfilter), 1, fp) != 1) {
+	if (fread(&bff, sizeof(bloomfilter_file), 1, fp) != 1) {
 		fclose(fp);
 		return BF_FREAD;
 	}
 
+	bf->size        = bff.size;
+	bf->hashcount   = bff.hashcount;
+	bf->bitmap_size = bff.bitmap_size;
+	bf->expected    = bff.expected;
+	bf->insertions  = bff.insertions;
+	bf->accuracy    = bff.accuracy;
+
 	// basic sanity check. should fail if filter isn't valid
 	if ((bf->size / 8) != bf->bitmap_size ||
-		sizeof(bloomfilter) + bf->bitmap_size != sb.st_size) {
+		sizeof(bloomfilter_file) + bf->bitmap_size != sb.st_size) {
 		fclose(fp);
 		return BF_INVALIDFILE;
 	}
@@ -715,7 +741,7 @@ bloom_error_t bloom_intersect(bloomfilter *result,
         result->bitmap[i] = bf1->bitmap[i] & bf2->bitmap[i];
     }
 
-    result->insertions += bf2->insertions; // TODO consider removing insertions
+    //result->insertions += bf2->insertions; // TODO consider removing insertions
 
     return BF_SUCCESS;
 }

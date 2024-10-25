@@ -1,6 +1,7 @@
 /**
  * @file bloom.h
  * @brief Header file for Bloom filter implementation
+ * @author Daniel Roberson
  *
  * This file contains the function declarations, type definitions, and
  * macros for working with Bloom filters. It provides an interface for
@@ -11,22 +12,12 @@
  * the filter's memory and accuracy parameters.
  *
  * @see bloom.c for the corresponding implementation.
- *
- * TODO: file format instead of using the struct
  */
 #ifndef BLOOM_H
 #define BLOOM_H
 
 #include <stdint.h>
 #include <stdbool.h>
-
-// TODO: implement 32, 64 bit functions? Need to test on a 32 bit system.
-// #if UINTPTR_MAX == 0xffffffff
-// typedef uint32_t (*hash_fun32_t)(const void *key, size_t len, uint32_t seed);
-// #define DEFAULT_HASH_FUNC_BITS
-// #else
-// typedef uint64_t (*hash_fun64_t)(const void *key, size_t len, uint64_t seed);
-// #endif /* UINTPTR_MAX */
 
 /**
  * @enum bloom_error_t
@@ -136,6 +127,45 @@ typedef struct {
 	uint8_t *bitmap;            /**< Pointer to the bitmap of the filter */
 } bloomfilter;
 
+
+/**
+ * @struct bloomfilter_file
+ * @brief Structure representing metadata for saving/loading a Bloom filter.
+ *
+ * This structure is used to store essential metadata about a Bloom
+ * filter, such as its size, the number of hash functions, and the
+ * desired accuracy.  It facilitates saving and loading a Bloom
+ * filter's state to/from a file.
+ *
+ * @var bloomfilter_file::size
+ * Total number of bits in the Bloom filter's bit array.
+ *
+ * @var bloomfilter_file::hashcount
+ * Number of hash functions used in the Bloom filter.
+ *
+ * @var bloomfilter_file::bitmap_size
+ * Size of the bit array in bytes.
+ *
+ * @var bloomfilter_file::expected
+ * Expected number of elements the Bloom filter is configured to hold.
+ *
+ * @var bloomfilter_file::insertions
+ * Current number of elements inserted into the Bloom filter.
+ *
+ * @var bloomfilter_file::accuracy
+ * Desired false positive rate, where 0.01 represents 99% accuracy.
+ */
+typedef struct {
+	uint8_t  magic[8];
+	uint8_t  name[256];
+	uint64_t size;
+	uint64_t hashcount;
+	uint64_t bitmap_size;
+	uint64_t expected;
+	uint64_t insertions;
+	float    accuracy;
+} bloomfilter_file;
+
 /* function declarations
  */
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
@@ -185,4 +215,9 @@ bool           bloom_add_if_not_present_string(bloomfilter *, const char *);
  * TODO: compressed bloom filters - by making the filters larger
  * initally, then using compression, the filters can take up even less
  * space than a "properly sized" Bloom filter - Broder & Mitzenmacher
+ *
+ * TODO: specify hash function. this currently uses mmh3 128 bit,
+ * spliting the resulting hash into two 64 bit hashes, and using
+ * double hashing for the remaining hashes. It may be useful to be
+ * able to switch hash functions.
  */
