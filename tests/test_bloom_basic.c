@@ -166,8 +166,7 @@ int main() {
 		fprintf(stderr, "FAILURE: bloom_load() on bad permissions file\n");
 		return EXIT_FAILURE;
 	}
-	bloom_destroy(&bad_permissions);
-	remove(bad_permissions_file);
+	unlink(bad_permissions_file);
 
 	// test clearing filter
 	printf("testing clearing the filter\n");
