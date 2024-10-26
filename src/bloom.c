@@ -251,8 +251,6 @@ static inline void calculate_positions(uint64_t position, uint64_t *byte_positio
  *         filters.
  * @return -1.0f on failure (Bloom filters aren't compatible for this
  *         operation).
- *
- * TODO: test
  */
 float bloom_estimate_intersection(const bloomfilter *bf1, const bloomfilter *bf2) {
 	if (bf1->size != bf2->size ||
