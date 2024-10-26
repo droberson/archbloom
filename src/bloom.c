@@ -123,7 +123,6 @@ static const uint8_t bit_count_table[256] = {
  * @param bf Bloom filter to count.
  *
  * @return The number of bits set to 1 in the provided Bloom filter.
- * TODO: test
  */
 size_t bloom_saturation_count(const bloomfilter *bf) {
 	size_t count = 0;
@@ -146,8 +145,6 @@ size_t bloom_saturation_count(const bloomfilter *bf) {
  * @param bf Bloom filter to calculate saturation for.
  *
  * @return The percentage of bits set in filter as a floating-point value.
- *
- * TODO: test
  */
 float bloom_saturation(const bloomfilter *bf) {
 	size_t total_bits = bf->bitmap_size * 8;
@@ -157,7 +154,8 @@ float bloom_saturation(const bloomfilter *bf) {
 }
 
 /**
- * @brief Clears the Bloom filter if its saturation exceeds the given threshold.
+ * @brief Clears the Bloom filter if its saturation exceeds the given
+ * threshold.
  *
  * This function checks the saturation of the Bloom filter and, if it
  * exceeds the specified threshold, clears the filter and returns
@@ -169,9 +167,7 @@ float bloom_saturation(const bloomfilter *bf) {
  *
  * @return true if the filter was cleared,
  * @return false if filter was not cleared (filter was under the
- * saturation threshold).
- *
- * TODO: test
+ *         saturation threshold).
  */
 bool bloom_clear_if_saturation_exceeds(bloomfilter *bf, float threshold) {
     float saturation = bloom_saturation(bf);
@@ -230,8 +226,6 @@ float bloom_estimate_false_positive_rate(const bloomfilter *bf) {
  * @param result Position of element.
  * @param byte_position Pointer to store calculated byte position.
  * @param bit_position Pointer to store bit calculated bit position.
- *
- * TODO: rename 'result' parameter?
  */
 static inline void calculate_positions(uint64_t position, uint64_t *byte_position, uint8_t *bit_position) {
 	*byte_position = position / 8;
@@ -267,14 +261,22 @@ float bloom_estimate_intersection(const bloomfilter *bf1, const bloomfilter *bf2
 	}
 
 	size_t intersection_count = 0;
-	size_t bits_total = bf1->bitmap_size * 8;
+	size_t union_count        = 0;
+	size_t bits_total         = bf1->bitmap_size * 8;
 
 	for (size_t i = 0; i < bf1->bitmap_size; i++) {
 		uint8_t intersection_bits = bf1->bitmap[i] & bf2->bitmap[i];
+		uint8_t union_bits        = bf1->bitmap[i] | bf2->bitmap[i];
+
 		intersection_count += bit_count_table[intersection_bits];
+		union_count        += bit_count_table[union_bits];
 	}
 
-	return ((float)intersection_count / bits_total) * 100.0;
+	if (union_count == 0) {
+		return 0.0f; // both filters empty
+	}
+
+	return ((float)intersection_count / union_count) * 100.0;
 }
 
 /**
@@ -377,8 +379,6 @@ void bloom_add_string(bloomfilter *bf, const char *element) {
  *
  * @return true if the element is already in the filter.
  * @return false if the element was added to the filter
- *
- * TODO: test
  */
 bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len) {
 	uint64_t hashes[bf->hashcount];
@@ -414,13 +414,11 @@ bool bloom_lookup_or_add(bloomfilter *bf, const void *element, const size_t len)
  * `bloom_lookup_or_add()` that makes it easier to work with string
  * elements.
  *
- * @param bf Pointer to the Bloom filter to perform this operation against..
+ * @param bf Pointer to the Bloom filter to perform this operation against.
  * @param element Pointer to the string element to check or add.
  *
  * @return true if the string was already in the filter.
  * @return false if the string was newly added.
- *
- * TODO: test
  */
 bool bloom_lookup_or_add_string(bloomfilter *bf, const char *element) {
 	return bloom_lookup_or_add(bf, element, strlen(element));
@@ -702,8 +700,6 @@ bloom_error_t bloom_load_fd(bloomfilter *bf, int fd) {
  *
  * @return A pointer to a string containing the relevant error
  * message, or "Unknown error" if the error code is out of range.
- *
- * TODO test
  */
 const char *bloom_strerror(bloom_error_t error) {
 	if (error < 0 || error >= BF_ERRORCOUNT) {
@@ -727,8 +723,6 @@ const char *bloom_strerror(bloom_error_t error) {
  * @return BF_SUCCESS on successful merge.
  * @return BF_OUTOFMEMORY if memory allocation fails for the result bitmap.
  * @return BF_INVALIDFILE if the two Bloom filters are not compatible.
- *
- * TODO: test
  */
 bloom_error_t bloom_merge(bloomfilter *result,
 						  const bloomfilter *bf1,
@@ -771,8 +765,6 @@ bloom_error_t bloom_merge(bloomfilter *result,
  * @return BF_SUCCESS on successful merge.
  * @return BF_OUTOFMEMORY if memory allocation fails for the result bitmap.
  * @return BF_INVALIDFILE if the two Bloom filters are not compatible.
- *
- * TODO: test
  */
 bloom_error_t bloom_intersect(bloomfilter *result,
 							  const bloomfilter *bf1,

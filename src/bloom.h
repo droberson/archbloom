@@ -167,17 +167,17 @@ bloom_error_t  bloom_load(bloomfilter *, const char *);
 bloom_error_t  bloom_save_fd(const bloomfilter *, int);
 bloom_error_t  bloom_load_fd(bloomfilter *, int);
 bloom_error_t  bloom_merge(bloomfilter *,
-						   const bloomfilter *,
-						   const bloomfilter *);
+                           const bloomfilter *,
+                           const bloomfilter *);
 bloom_error_t  bloom_intersect(bloomfilter *,
-							   const bloomfilter *,
-							   const bloomfilter *);
+                               const bloomfilter *,
+                               const bloomfilter *);
 float          bloom_estimate_intersection(const bloomfilter *,
-										   const bloomfilter *);
+                                           const bloomfilter *);
 size_t         bloom_saturation_count(const bloomfilter *);
 float          bloom_saturation(const bloomfilter *);
 bool           bloom_clear_if_saturation_exceeds(bloomfilter *,
-												 float threshold);
+                                                 float threshold);
 float          bloom_estimate_false_positive_rate(const bloomfilter *);
 
 bool           bloom_lookup(const bloomfilter *, const void *, const size_t);
@@ -188,8 +188,8 @@ bool           bloom_lookup_or_add_string(bloomfilter *, const char *);
 void           bloom_add(bloomfilter *, const void *, const size_t);
 void           bloom_add_string(bloomfilter *, const char *);
 bool           bloom_add_if_not_present(bloomfilter *,
-										const void *,
-										const size_t);
+                                        const void *,
+                                        const size_t);
 bool           bloom_add_if_not_present_string(bloomfilter *, const char *);
 
 #endif /* BLOOM_H */
