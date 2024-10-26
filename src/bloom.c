@@ -504,7 +504,7 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	// TODO copy name
 
 	fp = fopen(path, "wb");
-	if (fp == NULL) { // TODO test
+	if (fp == NULL) {
 		return BF_FOPEN;
 	}
 

@@ -4,6 +4,8 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "bloom.h"
 
@@ -103,7 +105,6 @@ int main() {
 	close(fd);
 	bloom_destroy(&bf);
 
-	// Load from file
 	bloomfilter newbloom;
 	bloom_load(&newbloom, tmp_file_name);
 
@@ -144,6 +145,29 @@ int main() {
 		fprintf(stderr, "FAILURE: \"asdf\" should be in filter\n");
 		return EXIT_FAILURE;
 	}
+
+	// Load from file
+	printf("attempting to load a file with bad permissions\n");
+	bloomfilter bad_permissions;
+
+	char *bad_permissions_file = "bloom-badperms";
+	int bfd = open(bad_permissions_file, O_CREAT | O_WRONLY, 000);
+	if (bfd == -1) {
+		fprintf(stderr, "FAILURE: unable to create file %s: %s\n",
+				bad_permissions_file,
+				strerror(errno));
+		return EXIT_FAILURE;
+	}
+	close(bfd);
+
+	bloom_error_t badperm_error;
+	badperm_error = bloom_load(&bad_permissions, bad_permissions_file);
+	if (badperm_error != BF_FOPEN) {
+		fprintf(stderr, "FAILURE: bloom_load() on bad permissions file\n");
+		return EXIT_FAILURE;
+	}
+	bloom_destroy(&bad_permissions);
+	remove(bad_permissions_file);
 
 	// test clearing filter
 	printf("testing clearing the filter\n");
