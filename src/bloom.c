@@ -468,6 +468,48 @@ bool bloom_add_if_not_present_string(bloomfilter *bf, const char *element) {
 }
 
 /**
+ * @brief Set the name of the Bloom filter.
+ *
+ * This function sets a name for the Bloom filter. The name should be
+ * within the maximum allowable length for Bloom filter names, which
+ * is 255 characters.  Names help distinguish different filters in
+ * applications where multiple Bloom filters are used.
+ *
+ * @param bf Pointer to the Bloom filter for which the name is to be set.
+ * @param name Pointer to a character string containing the new name.
+ *             The name will be truncated if it exceeds 255 characters.
+ *
+ * @return true if the name was successfully set.
+ * @return false if the provided name is too long.
+ */
+bool bloom_set_name(bloomfilter *bf, const char *name) {
+	if (strlen(name) > BLOOM_MAX_NAME_LENGTH) {
+		return false;
+	}
+
+	strncpy(bf->name, name, BLOOM_MAX_NAME_LENGTH);
+	bf->name[BLOOM_MAX_NAME_LENGTH] = '\0';
+
+	return true;
+}
+
+/**
+ * @brief Retrieve the name of the Bloom filter.
+ *
+ * This function returns the name associated with a Bloom filter. The
+ * name can be used to identify the filter for reference purposes in
+ * applications where multiple filters are used.
+ *
+ * @param bf Pointer to the Bloom filter from which to retrieve the name.
+ *
+ * @return A constant character pointer to the name of the Bloom filter.
+ *         If the Bloom filter has no name, an empty string will be returned.
+ */
+const char *bloom_get_name(bloomfilter *bf) {
+	return bf->name;
+}
+
+/**
  * @brief Saves a Bloom filter to disk.
  *
  * This function saves the Bloom filter to a file on disk. The file
@@ -501,7 +543,8 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
 	bff.bitmap_size = bf->bitmap_size;
 	bff.expected    = bf->expected;
 	bff.accuracy    = bf->accuracy;
-	// TODO copy name
+	strncpy((char *)bff.name, bf->name, BLOOM_MAX_NAME_LENGTH);
+	bff.name[BLOOM_MAX_NAME_LENGTH] = '\0';
 
 	fp = fopen(path, "wb");
 	if (fp == NULL) {
@@ -533,8 +576,6 @@ bloom_error_t bloom_save(const bloomfilter *bf, const char *path) {
  * @return BF_FSTAT if fstat() fails.
  * @return BF_INVALIDFILE if the file is invalid.
  * @return BF_OUTOFMEMORY if memory allocation fails.
- *
- * TODO: test various edge cases
  */
 bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	FILE             *fp;
@@ -561,6 +602,8 @@ bloom_error_t bloom_load(bloomfilter *bf, const char *path) {
 	bf->bitmap_size = bff.bitmap_size;
 	bf->expected    = bff.expected;
 	bf->accuracy    = bff.accuracy;
+	strncpy(bf->name, (char *)bff.name, BLOOM_MAX_NAME_LENGTH);
+	bf->name[BLOOM_MAX_NAME_LENGTH] = '\0';
 
 	// basic sanity check. should fail if filter isn't valid
 	if ((bf->size / 8) != bf->bitmap_size ||
@@ -622,6 +665,9 @@ bloom_error_t bloom_save_fd(const bloomfilter *bf, int fd) {
     bff.bitmap_size = bf->bitmap_size;
     bff.expected = bf->expected;
     bff.accuracy = bf->accuracy;
+	strncpy((char *)bff.name, bf->name, BLOOM_MAX_NAME_LENGTH);
+	bff.name[BLOOM_MAX_NAME_LENGTH] = '\0';
+
 
     if (write(fd, &bff, sizeof(bloomfilter_file)) != sizeof(bloomfilter_file)) {
         return BF_FWRITE;
@@ -666,6 +712,8 @@ bloom_error_t bloom_load_fd(bloomfilter *bf, int fd) {
     bf->bitmap_size = bff.bitmap_size;
     bf->expected = bff.expected;
     bf->accuracy = bff.accuracy;
+	strncpy(bf->name, (char *)bff.name, BLOOM_MAX_NAME_LENGTH);
+	bf->name[BLOOM_MAX_NAME_LENGTH] = '\0';
 
     // Basic sanity check: verify if file structure is valid
     if ((bf->size / 8) != bf->bitmap_size ||

@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define BLOOM_MAX_NAME_LENGTH 255
+
 /**
  * @enum bloom_error_t
  * @brief Enum representing error status codes for Bloom filter operations.
@@ -118,6 +120,7 @@ typedef struct {
 	size_t   bitmap_size;       /**< Size of the bitmap in bytes */
 	size_t   expected;          /**< Expected capacity of the filter */
 	float    accuracy;          /**< Desired margin of error */
+	char     name[BLOOM_MAX_NAME_LENGTH + 1];
 	uint8_t *bitmap;            /**< Pointer to the bitmap of the filter */
 } bloomfilter;
 
@@ -148,7 +151,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t  magic[8];
-	uint8_t  name[256];
+	uint8_t  name[BLOOM_MAX_NAME_LENGTH + 1];
 	uint64_t size;
 	uint64_t hashcount;
 	uint64_t bitmap_size;
@@ -161,6 +164,8 @@ typedef struct {
 bloom_error_t  bloom_init(bloomfilter *, const size_t, const float);
 void           bloom_destroy(bloomfilter *);
 void           bloom_clear(bloomfilter *);
+const char    *bloom_get_name(bloomfilter *);
+bool           bloom_set_name(bloomfilter *, const char *);
 const char    *bloom_strerror(const bloom_error_t);
 bloom_error_t  bloom_save(const bloomfilter *, const char *);
 bloom_error_t  bloom_load(bloomfilter *, const char *);
