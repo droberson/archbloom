@@ -36,6 +36,7 @@ typedef enum {
     TDBF_FWRITE,              /**< Failed to write to file. */
     TDBF_FSTAT,               /**< Failed to stat() the file descriptor. */
     TDBF_INVALIDFILE,         /**< Invalid or unparseable file format. */
+	TDBF_INVALIDCOUNTERSIZE,  /**< Invalid counter size. */
     // Used for counting the number of statuses. Do not add statuses below this line.
     TDBF_ERRORCOUNT           /**< Total number of error statuses. */
 } tdbloom_error_t;
@@ -57,7 +58,8 @@ const char *tdbloom_errors[] = {
     "Unable to read file",     /**< TDBF_FREAD: Failed to read from file. */
     "Unable to write to file", /**< TDBF_FWRITE: Failed to write to file. */
     "fstat() error",           /**< TDBF_FSTAT: Failed to stat() the file descriptor. */
-    "Invalid file format"      /**< TDBF_INVALIDFILE: File format is invalid or unparseable. */
+    "Invalid file format",     /**< TDBF_INVALIDFILE: File format is invalid or unparseable. */
+	"Invalid counter size"     /**< TDBF_INVALIDCOUNTERSIZE: Counter size is invalid. */
 };
 
 /**

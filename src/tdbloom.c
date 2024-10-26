@@ -97,7 +97,7 @@ tdbloom_error_t tdbloom_init(tdbloom *tdbf, const size_t expected, const float a
 	else if (timeout < UINT16_MAX)  { bytes = 2; tdbf->max_time = UINT16_MAX; }
 	else if (timeout < UINT32_MAX)  { bytes = 4; tdbf->max_time = UINT32_MAX; }
 	else if (timeout <= UINT64_MAX) { bytes = 8; tdbf->max_time = UINT64_MAX; }
-
+	else { return TDBF_INVALIDCOUNTERSIZE; }
 	tdbf->bytes = bytes;
 
 	tdbf->filter = calloc(tdbf->size, bytes);
