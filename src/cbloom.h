@@ -93,22 +93,26 @@ bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
 bool            cbloom_lookup_string(const cbloomfilter *, const char *);
 void            cbloom_add(cbloomfilter *, void *, const size_t);
 void            cbloom_add_string(cbloomfilter *, const char *);
+float cbloom_get_average_count(cbloomfilter *); // TODO
+size_t cbloom_count_elements_above_threshold(const cbloomfilter, size_t); // TODO
 void            cbloom_remove(cbloomfilter *, void *, const size_t);
 void            cbloom_remove_string(cbloomfilter *, const char *);
 void            cbloom_clear(cbloomfilter *);
+bool cbloom_clear_if_count_above(cbloomfilter *, const void *, size_t, size_t); // TODO
+bool cbloom_clear_if_count_above_string(cbloomfilter *, const char *, size_t); // TODO
+bool cbloom_clear_element(cbloomfilter *, const void *, size_t); // TODO
 size_t          cbloom_saturation_count(const cbloomfilter *);
 float           cbloom_saturation(const cbloomfilter *);
 cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
 cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
+cbloom_error_t cbloom_save_fd(cbloomfilter *, int); // TODO
+cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
 const char     *cbloom_strerror(cbloom_error_t);
 
 /*
  * TODO: 4 bit counters
- * TODO: potential additions
- * float cbloom_get_average_count(cbloomfilter);
- * bool cbloom_remove_if_count_above(cbloomfilter *, const void *, size_t threshold, size_t len);
- * bool cbloom_reset_element(cbloomflilter *, const void *element, size_t len);
- * size_t cbloom_count_elements_above_threshold(const cbloomfilter, size_t threshold);
+ * TODO: name filters
+ * TODO: file format struct, refactor cbloom_save/cbloom_load
  *
  * "In practice, when a counter does overflow, one approach is to
  * leave it at its maximum value. This can cause a later false
