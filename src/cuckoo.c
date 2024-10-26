@@ -271,14 +271,14 @@ bool cuckoo_load(cuckoofilter *cf, const char *path) {
 
 	// re-populate bucket data
 	cfb.buckets = (cuckoobucket *)calloc(cf->num_buckets * cf->bucket_size, sizeof(cuckoobucket));
-	if (cf->buckets == NULL) {
+	if (cfb.buckets == NULL) {
 		fclose(fp);
 		return false;
 	}
 	cf->buckets = cfb.buckets;
 
 	cfb.bucket_insertions = (size_t *)calloc(cf->num_buckets, sizeof(size_t));
-	if (cf->bucket_insertions == NULL) {
+	if (cfb.bucket_insertions == NULL) {
 		free(cf->buckets);
 		cf->buckets = NULL;
 		fclose(fp);
