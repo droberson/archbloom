@@ -199,7 +199,9 @@ int main() {
 	cbloom_destroy(&cbf64);
 
 	// cleanup
-	remove("/tmp/countgbloom");
+	// TODO: make random tmp files instead of hard-coded.
+	remove("/tmp/cbloom");
+	remove("/tmp/cbf32");
 
 	cbloom_destroy(&cbf);
 	cbloom_destroy(&newcbf);
