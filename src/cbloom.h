@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CBLOOM_MAX_NAME_LENGTH 255
+
 /**
  * @brief Error status type used for mapping function return values to
  * error messages.
@@ -79,14 +81,30 @@ typedef struct {
     uint64_t      size; /**< Size of the counting Bloom filter in bits. */
     uint64_t      hashcount; /**< Number of hash functions used per element. */
     uint64_t      countermap_size; /**< Total size of the counter map. */
+	uint64_t      expected; // TODO document
+	float         accuracy; // TODO document
+	char          name[CBLOOM_MAX_NAME_LENGTH + 1];
     counter_size  csize;  /**< Size of the counter (8, 16, 32, or 64 bits). */
     void         *countermap;  /**< Pointer to a map of element counters. */
 } cbloomfilter;
+
+// TODO document
+typedef struct {
+	uint8_t  magic[8];
+	uint8_t  name[CBLOOM_MAX_NAME_LENGTH + 1];
+	uint64_t size;
+	uint64_t csize;
+	uint64_t hashcount;
+	uint64_t expected;
+	float    accuracy;
+} cbloomfilter_file;
 
 /* function declarations
  */
 cbloom_error_t  cbloom_init(cbloomfilter *, const size_t, const float, counter_size);
 void            cbloom_destroy(cbloomfilter *);
+const char     *cbloom_get_name(cbloomfilter *); // TODO
+bool            cbloom_set_name(cbloomfilter *, const char *); // TODO
 size_t          cbloom_count(const cbloomfilter *, void *, size_t);
 size_t          cbloom_count_string(const cbloomfilter *, char *);
 bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
@@ -101,10 +119,13 @@ void            cbloom_clear(cbloomfilter *);
 bool cbloom_clear_if_count_above(cbloomfilter *, const void *, size_t, size_t); // TODO
 bool cbloom_clear_if_count_above_string(cbloomfilter *, const char *, size_t); // TODO
 bool cbloom_clear_element(cbloomfilter *, const void *, size_t); // TODO
+void cbloom_decay_linear(cbloomfilter *, size_t); // TODO
+void cbloom_decay_exponential(cbloomfilter *, float); // TODO
+uint64_t *cbloom_histogram(const cbloomfilter *); // TODO
 size_t          cbloom_saturation_count(const cbloomfilter *);
 float           cbloom_saturation(const cbloomfilter *);
-cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
-cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
+cbloom_error_t  cbloom_save(cbloomfilter *, const char *); // TODO refactor
+cbloom_error_t  cbloom_load(cbloomfilter *, const char *); // TODO refactor
 cbloom_error_t cbloom_save_fd(cbloomfilter *, int); // TODO
 cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
 const char     *cbloom_strerror(cbloom_error_t);
@@ -113,6 +134,19 @@ const char     *cbloom_strerror(cbloom_error_t);
  * TODO: 4 bit counters
  * TODO: name filters
  * TODO: file format struct, refactor cbloom_save/cbloom_load
+ *
+ * TODO: histograms. these can be used to detect anomalies and heavy
+ * hitters. these can also be used by developers to determine if their
+ * filters are working as they intend or to determine appropriate
+ * rates to decay counters.
+ *
+ * TODO: count decaying. decrease by a fixed amount (linear), or
+ * exponential (a percentage; this allows frequent elements to decay
+ * slower than infrequent elements). this can be done at intervals
+ * (hourly, daily, ...) or when a counter reaches a
+ * threshold. decaying makes the filter prefer newer data and prevents
+ * it from becoming oversaturated. consider adding mechanisms to do
+ * this automatically.
  *
  * "In practice, when a counter does overflow, one approach is to
  * leave it at its maximum value. This can cause a later false

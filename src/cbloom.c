@@ -70,6 +70,9 @@ cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float
 	// add 0.5 to round up/down
 	cbf->hashcount = (uint64_t)((cbf->size / expected) * log(2) + 0.5);
 	cbf->csize     = csize;
+	cbf->accuracy  = accuracy;
+	cbf->expected  = expected;
+	strncpy(cbf->name, "DEFAULT", 7);
 
 	switch (csize) {
 	case COUNTER_8BIT:
@@ -110,6 +113,23 @@ void cbloom_destroy(cbloomfilter *cbf) {
 		free(cbf->countermap);
 		cbf->countermap = NULL;
 	}
+}
+
+// TODO document
+bool cbloom_set_name(cbloomfilter *cbf, const char *name) {
+	if (strlen(name) > CBLOOM_MAX_NAME_LENGTH) {
+		return false;
+	}
+
+	strncpy(cbf->name, name, CBLOOM_MAX_NAME_LENGTH);
+	cbf->name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+
+	return true;
+}
+
+// TODO document
+const char *cbloom_get_name(cbloomfilter *cbf) {
+	return cbf->name;
 }
 
 /* get_counter, inc_counter, dec_counter -- helper functions used to handle
