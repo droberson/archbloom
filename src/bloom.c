@@ -57,7 +57,7 @@ bloom_error_t bloom_init(bloomfilter *bf, const size_t expected, const float acc
 	bf->bitmap_size = bf->size / 8;
 	bf->expected    = expected;
 	bf->accuracy    = accuracy;
-
+	strncpy(bf->name, "DEFAULT", 7);
 	bf->bitmap      = calloc(bf->bitmap_size, sizeof(uint8_t));
 	if (bf->bitmap == NULL) {
 		return BF_OUTOFMEMORY;
