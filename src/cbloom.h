@@ -212,9 +212,10 @@ void            cbloom_remove_string(cbloomfilter *, const char *);
 void            cbloom_clear(cbloomfilter *);
 bool cbloom_clear_if_count_above(cbloomfilter *, const void *, size_t, size_t); // TODO
 bool cbloom_clear_if_count_above_string(cbloomfilter *, const char *, size_t); // TODO
-bool cbloom_clear_element(cbloomfilter *, const void *, size_t); // TODO
-void cbloom_decay_linear(cbloomfilter *, size_t); // TODO
-void cbloom_decay_exponential(cbloomfilter *, float); // TODO
+bool cbloom_clear_element(cbloomfilter *, void *, size_t); // TODO
+bool cbloom_clear_element_string(cbloomfilter *, const char *); // TODO
+void            cbloom_decay_linear(cbloomfilter *, size_t);
+void            cbloom_decay_exponential(cbloomfilter *, float);
 
 uint64_t *cbloom_histogram(const cbloomfilter *); // TODO
 
