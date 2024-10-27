@@ -155,7 +155,8 @@ const char *cbloom_get_name(cbloomfilter *cbf) {
 	return cbf->name;
 }
 
-/* get_counter, inc_counter, dec_counter -- helper functions used to handle
+/* get_counter, set_counter, inc_counter_amount, dec_counter_amount,
+ *     inc_counter, dec_counter -- helper functions used to handle
  *     different sized counters.
  */
 static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
@@ -169,58 +170,49 @@ static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
 	}
 }
 
-static void inc_counter(cbloomfilter *cbf, uint64_t position) {
+static inline void set_counter(const cbloomfilter *cbf, uint64_t position, uint64_t value) {
 	switch (cbf->csize) {
 	case COUNTER_8BIT:
-		if (((uint8_t *)cbf->countermap)[position] != UINT8_MAX) {
-			((uint8_t *)cbf->countermap)[position]++;
-		}
+		((uint8_t *)cbf->countermap)[position] =
+			(value > UINT8_MAX) ? UINT8_MAX : (uint8_t)value;
 		break;
 	case COUNTER_16BIT:
-		if (((uint16_t *)cbf->countermap)[position] != UINT16_MAX) {
-			((uint16_t *)cbf->countermap)[position]++;
-		}
+		((uint16_t *)cbf->countermap)[position] =
+			(value > UINT16_MAX) ? UINT16_MAX : (uint16_t)value;
 		break;
 	case COUNTER_32BIT:
-		if (((uint32_t *)cbf->countermap)[position] != UINT32_MAX) {
-			((uint32_t *)cbf->countermap)[position]++;
-		}
+		((uint32_t *)cbf->countermap)[position] =
+			(value > UINT32_MAX) ? UINT32_MAX : (uint32_t)value;
 		break;
 	case COUNTER_64BIT:
-		if (((uint64_t *)cbf->countermap)[position] != UINT64_MAX) {
-			((uint64_t *)cbf->countermap)[position]++;
-		}
+		((uint64_t *)cbf->countermap)[position] = value; // size check unneeded
 		break;
 	default:
 		return; // shouldn't get here
 	}
 }
 
-static void dec_counter(cbloomfilter *cbf, uint64_t position) {
-	switch (cbf->csize) {
-		case COUNTER_8BIT:
-		if (((uint8_t *)cbf->countermap)[position] > 0) {
-			((uint8_t *)cbf->countermap)[position]--;
-		}
-		break;
-	case COUNTER_16BIT:
-		if (((uint16_t *)cbf->countermap)[position] > 0) {
-			((uint16_t *)cbf->countermap)[position]--;
-		}
-		break;
-	case COUNTER_32BIT:
-		if (((uint32_t *)cbf->countermap)[position] > 0) {
-			((uint32_t *)cbf->countermap)[position]--;
-		}
-		break;
-	case COUNTER_64BIT:
-		if (((uint64_t *)cbf->countermap)[position] > 0) {
-			((uint64_t *)cbf->countermap)[position]--;
-		}
-		break;
-	default:
-		return; // shouldn't get here
+static void inc_counter_amount(cbloomfilter *cbf, uint64_t position, uint64_t amount) {
+	uint64_t counter_value = get_counter(cbf, position);
+	set_counter(cbf, position, counter_value + amount);
+}
+
+static void inc_counter(cbloomfilter *cbf, uint64_t position) {
+	inc_counter_amount(cbf, position, 1);
+}
+
+static void dec_counter_amount(cbloomfilter *cbf, uint64_t position, uint64_t amount) {
+	uint64_t counter_value = get_counter(cbf, position);
+
+	if (counter_value <= amount) {
+		set_counter(cbf, position, 0);
+	} else {
+		set_counter(cbf, position, counter_value - amount);
 	}
+}
+
+static void dec_counter(cbloomfilter *cbf, uint64_t position) {
+	dec_counter_amount(cbf, position, 1);
 }
 
 /**
@@ -401,6 +393,82 @@ void cbloom_remove(cbloomfilter *cbf, void *element, const size_t len) {
 		for (int i = 0; i < cbf->hashcount; i++) {
 			dec_counter(cbf, positions[i]);
 		}
+	}
+}
+
+/**
+ * @brief Apply linear decay to all counters in the counting Bloom filter.
+ *
+ * This function decreases each counter in the counting Bloom filter by a
+ * specified `decay_amount`. If a counter's current value is less than or equal
+ * to `decay_amount`, it is set to zero to avoid underflow. Zeroed counters are
+ * skipped in the decay process.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param decay_amount The amount to decrease each counter by.
+ *
+ * @note This function performs a fixed linear decay across all counters,
+ *       reducing the impact of elements with low counts.
+ *
+ * TODO: test
+ */
+void cbloom_apply_linear_decay(cbloomfilter *cbf, uint64_t decay_amount) {
+	size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
+
+	for (size_t i = 0; i < num_counters; i++) {
+		uint64_t counter_value = get_counter(cbf, i);
+		if (counter_value == 0) {
+			continue; // skip zeroed counters
+		}
+
+		if (counter_value <= decay_amount) {
+			counter_value = 0; // avoid underflows
+		} else {
+			counter_value -= decay_amount;
+		}
+
+		set_counter(cbf, i, counter_value);
+	}
+}
+
+/**
+ * @brief Apply exponential decay to all counters in the counting Bloom filter.
+ *
+ * This function applies an exponential decay factor to each counter
+ * in the counting Bloom filter, effectively reducing each counter by
+ * a percentage specified by `decay_factor`. Larger counter values
+ * decay more slowly relative to smaller values, helping retain
+ * elements with higher frequencies.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param decay_factor The decay multiplier applied to each
+ *        counter. Must be between 0.0 (full decay) and 1.0 (no
+ *        decay). Values outside this range are ignored, and no decay
+ *        is applied.
+ *
+ * @note This function does not modify zeroed counters.
+ * @note If `decay_factor` is outside the range [0.0, 1.0], the
+ *       function will return without applying decay. Consider adding
+ *       error handling or logging for invalid `decay_factor` values.
+ *
+ * TODO: test
+ */
+void cbloom_apply_exponential_decay(cbloomfilter *cbf, float decay_factor) {
+	if (decay_factor < 0.0 || decay_factor > 1.0) {
+        return; // TODO error reporting?
+    }
+
+	size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
+
+	for (size_t i = 0; i < num_counters; i++) {
+		uint64_t counter_value = get_counter(cbf, i);
+		if (counter_value == 0) {
+			continue; // skip zeroed counters
+		}
+
+		uint64_t decayed_value = (uint64_t)(counter_value * decay_factor);
+
+		set_counter(cbf, i, decayed_value);
 	}
 }
 

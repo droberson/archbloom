@@ -185,14 +185,28 @@ cbloom_error_t  cbloom_init(cbloomfilter *, const size_t, const float, counter_s
 void            cbloom_destroy(cbloomfilter *);
 const char     *cbloom_get_name(cbloomfilter *);
 bool            cbloom_set_name(cbloomfilter *, const char *);
+cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
+cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
+cbloom_error_t cbloom_save_fd(cbloomfilter *, int); // TODO
+cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
+
 size_t          cbloom_count(const cbloomfilter *, void *, size_t);
 size_t          cbloom_count_string(const cbloomfilter *, char *);
-bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
-bool            cbloom_lookup_string(const cbloomfilter *, const char *);
-void            cbloom_add(cbloomfilter *, void *, const size_t);
-void            cbloom_add_string(cbloomfilter *, const char *);
 float cbloom_get_average_count(cbloomfilter *); // TODO
 size_t cbloom_count_elements_above_threshold(const cbloomfilter, size_t); // TODO
+size_t          cbloom_saturation_count(const cbloomfilter *);
+float           cbloom_saturation(const cbloomfilter *);
+
+bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
+bool            cbloom_lookup_string(const cbloomfilter *, const char *);
+bool cbloom_lookup_or_add(cbloomfilter *, void *, const size_t); // TODO
+bool cbloom_lookup_or_add_string(cbloomfilter *, const char *); // TODO
+
+void            cbloom_add(cbloomfilter *, void *, const size_t);
+void            cbloom_add_string(cbloomfilter *, const char *);
+bool cbloom_add_if_not_present(cbloomfilter *, void *, const size_t); // TODO
+bool cbloom_add_if_not_present_string(cbloomfilter *, const char *); // TODO
+
 void            cbloom_remove(cbloomfilter *, void *, const size_t);
 void            cbloom_remove_string(cbloomfilter *, const char *);
 void            cbloom_clear(cbloomfilter *);
@@ -201,30 +215,19 @@ bool cbloom_clear_if_count_above_string(cbloomfilter *, const char *, size_t); /
 bool cbloom_clear_element(cbloomfilter *, const void *, size_t); // TODO
 void cbloom_decay_linear(cbloomfilter *, size_t); // TODO
 void cbloom_decay_exponential(cbloomfilter *, float); // TODO
+
 uint64_t *cbloom_histogram(const cbloomfilter *); // TODO
-size_t          cbloom_saturation_count(const cbloomfilter *);
-float           cbloom_saturation(const cbloomfilter *);
-cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
-cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
-cbloom_error_t cbloom_save_fd(cbloomfilter *, int); // TODO
-cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
+
 const char     *cbloom_strerror(cbloom_error_t);
 
 /*
- * TODO: 4 bit counters
+ * TODO: 4 bit counters. may be useful for small counters not
+ * never expected to be exceeding 8.
  *
  * TODO: histograms. these can be used to detect anomalies and heavy
  * hitters. these can also be used by developers to determine if their
  * filters are working as they intend or to determine appropriate
  * rates to decay counters.
- *
- * TODO: count decaying. decrease by a fixed amount (linear), or
- * exponential (a percentage; this allows frequent elements to decay
- * slower than infrequent elements). this can be done at intervals
- * (hourly, daily, ...) or when a counter reaches a
- * threshold. decaying makes the filter prefer newer data and prevents
- * it from becoming oversaturated. consider adding mechanisms to do
- * this automatically.
  *
  * "In practice, when a counter does overflow, one approach is to
  * leave it at its maximum value. This can cause a later false
