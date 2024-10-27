@@ -115,7 +115,20 @@ void cbloom_destroy(cbloomfilter *cbf) {
 	}
 }
 
-// TODO document
+/**
+ * @brief Set the name of the counting Bloom filter.
+ *
+ * This function sets a name for the counting Bloom filter. The name is
+ * useful for identifying filters when managing multiple instances.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param name Null-terminated string to be set as the filter's name.
+ *             If the string length exceeds `CBLOOM_MAX_NAME_LENGTH`,
+ *             the function returns `false` without setting the name.
+ *
+ * @return `true` if the name was successfully set.
+ * @return `false` if the name length exceeds `CBLOOM_MAX_NAME_LENGTH`.
+ */
 bool cbloom_set_name(cbloomfilter *cbf, const char *name) {
 	if (strlen(name) > CBLOOM_MAX_NAME_LENGTH) {
 		return false;
@@ -127,7 +140,17 @@ bool cbloom_set_name(cbloomfilter *cbf, const char *name) {
 	return true;
 }
 
-// TODO document
+/**
+ * @brief Retrieve the name of the counting Bloom filter.
+ *
+ * This function returns the name assigned to the counting Bloom filter.
+ * The name can help with identification in applications where multiple
+ * filters are in use.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ *
+ * @return Pointer to the null-terminated name of the filter.
+ */
 const char *cbloom_get_name(cbloomfilter *cbf) {
 	return cbf->name;
 }
@@ -471,15 +494,33 @@ void cbloom_clear(cbloomfilter *cbf) {
  * @return CBF_FWRITE if there was an error writing to the file.
  */
 cbloom_error_t cbloom_save(cbloomfilter *cbf, const char *path) {
-	FILE        *fp;
-	struct stat  sb;
+	FILE              *fp;
+	cbloomfilter_file  cbff = {0};
+
+	cbff.magic[0] = '!';
+	cbff.magic[1] = 'c';
+	cbff.magic[2] = 'b';
+	cbff.magic[3] = 'l';
+	cbff.magic[4] = 'o';
+	cbff.magic[5] = 'o';
+	cbff.magic[6] = 'm';
+	cbff.magic[7] = '!';
+
+	cbff.size            = cbf->size;
+	cbff.csize           = cbf->csize;
+	cbff.hashcount       = cbf->hashcount;
+	cbff.expected        = cbf->expected;
+	cbff.accuracy        = cbf->accuracy;
+	cbff.countermap_size = cbf->countermap_size;
+	strncpy((char *)cbff.name, cbf->name, CBLOOM_MAX_NAME_LENGTH);
+	cbff.name[CBLOOM_MAX_NAME_LENGTH] = '\0';
 
 	fp = fopen(path, "wb");
 	if (fp == NULL) {
 		return CBF_FOPEN;
 	}
 
-	if (fwrite(cbf, sizeof(cbloomfilter), 1, fp) != 1 ||
+	if (fwrite(&cbff, sizeof(cbloomfilter_file), 1, fp) != 1 ||
 		fwrite(cbf->countermap, cbf->countermap_size, 1, fp) != 1) {
 		fclose(fp);
 		return CBF_FWRITE;
@@ -507,8 +548,9 @@ cbloom_error_t cbloom_save(cbloomfilter *cbf, const char *path) {
  * @return CBF_OUTOFMEMORY if memory allocation failed.
  */
 cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
-	FILE        *fp;
-    struct stat  sb;
+	FILE              *fp;
+    struct stat        sb;
+	cbloomfilter_file  cbff;
 
 	fp = fopen(path, "rb");
 	if (fp == NULL) {
@@ -520,15 +562,22 @@ cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 		return CBF_FSTAT;
 	}
 
-	if (fread(cbf, sizeof(cbloomfilter), 1, fp) != 1) {
+	if (fread(&cbff, sizeof(cbloomfilter_file), 1, fp) != 1) {
 		fclose(fp);
-		free(cbf->countermap);
-		cbf->countermap = NULL;
 		return CBF_FREAD;
 	}
 
+	cbf->size            = cbff.size;
+	cbf->csize           = cbff.csize;
+	cbf->hashcount       = cbff.hashcount;
+	cbf->expected        = cbff.expected;
+	cbf->accuracy        = cbff.accuracy;
+	cbf->countermap_size = cbff.countermap_size;
+	strncpy(cbf->name, (char *)cbff.name, CBLOOM_MAX_NAME_LENGTH);
+	cbf->name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+
 	// basic sanity check. should fail if the file isn't valid
-	if (sizeof(cbloomfilter) + cbf->countermap_size != sb.st_size) {
+	if (sizeof(cbloomfilter_file) + cbf->countermap_size != sb.st_size) {
 		fclose(fp);
 		return CBF_INVALIDFILE;
 	}

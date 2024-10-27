@@ -95,6 +95,7 @@ typedef struct {
 	uint64_t size;
 	uint64_t csize;
 	uint64_t hashcount;
+	uint64_t countermap_size;
 	uint64_t expected;
 	float    accuracy;
 } cbloomfilter_file;
