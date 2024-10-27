@@ -6,8 +6,6 @@
  * This file contains functions for working with Bloom filters,
  * including initialization, destruction, insertion, querying, and
  * saving and loading filters from disk.
- *
- * TODO: name filters
  */
 #include <stdlib.h>
 #include <stdio.h>
