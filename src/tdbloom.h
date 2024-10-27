@@ -114,5 +114,10 @@ const char      *tdbloom_strerror(tdbloom_error_t);
  * bool tdbloom_age_element(tdbloom *, const void *element, size_t len, size_t amount);
  * void tdbloom_adjust_timeout(tdbloom *, size_t new_timeout);
  * size_t tdbloom_saturation_count(const tdbloom);
+ * bool tdbloom_was_active_within(const tdcbloom *cbf, const void *element, size_t size, time_t start, time_t end);
+ * time_t tdcbloom_get_last_access_time(const tdcbloom *filter, const void *element, size_t size);
+ * void tdbloom_expire_below_count(tdcbloom *filter, size_t threshold_count);
+ * void tdbloom_expire_older_than(tdcbloom *filter, time_t max_age);
+ * void tdbloom_adjust_timeout(tdcbloom*, size_t);
  */
 #endif /* TDBLOOM_H */
