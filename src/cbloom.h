@@ -63,7 +63,8 @@ const char *cbloom_errors[] = {
  * Larger counters should be used when higher counts are anticipated.
  */
 typedef enum {
-    COUNTER_8BIT,  /**< 8-bit counter, suitable for small element counts. */
+	COUNTER_4BIT,  /**< 4-bit counter, for very small element counts. (<=15) */
+    COUNTER_8BIT,  /**< 8-bit counter, for small element counts. (<=255) */
     COUNTER_16BIT, /**< 16-bit counter, allows for moderate element counts. */
     COUNTER_32BIT, /**< 32-bit counter, suitable for larger element counts. */
     COUNTER_64BIT  /**< 64-bit counter, for very large element counts. */
@@ -224,14 +225,11 @@ bool            cbloom_clear_if_count_above_string(cbloomfilter *,
 void            cbloom_decay_linear(cbloomfilter *, size_t);
 void            cbloom_decay_exponential(cbloomfilter *, float);
 
-uint64_t *cbloom_histogram(const cbloomfilter *); // TODO
+//uint64_t *cbloom_histogram(const cbloomfilter *); // TODO
 
 const char     *cbloom_strerror(cbloom_error_t);
 
 /*
- * TODO: 4 bit counters. may be useful for small counters not
- * never expected to be exceeding 8.
- *
  * TODO: histograms. these can be used to detect anomalies and heavy
  * hitters. these can also be used by developers to determine if their
  * filters are working as they intend or to determine appropriate

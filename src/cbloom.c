@@ -41,6 +41,7 @@
  *       bloom filter implementation in this collection. perhaps use
  *       __attribute__((visibility("hidden"))) and compile with
  *       -fvisibility=hidden?
+ * TODO: overflow check?
  */
 static uint64_t ideal_size(const uint64_t expected, const float accuracy) {
 	return -(expected * log(accuracy) / pow(log(2.0), 2));
@@ -76,6 +77,9 @@ cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float
 	strncpy(cbf->name, "DEFAULT", 7);
 
 	switch (csize) {
+	case COUNTER_4BIT:
+		cbf->countermap_size = (cbf->size + 1) / 2;
+		break;
 	case COUNTER_8BIT:
 		cbf->countermap_size = cbf->size * sizeof(uint8_t);
 		break;
@@ -162,6 +166,9 @@ const char *cbloom_get_name(cbloomfilter *cbf) {
  */
 static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
 	switch (cbf->csize) {
+	case COUNTER_4BIT:
+		uint8_t byte = ((uint8_t *)cbf->countermap)[position / 2];
+		return (position % 2 == 0) ? (byte & 0x0f) : (byte >> 4);
 	case COUNTER_8BIT:	return  ((uint8_t *)cbf->countermap)[position];
 	case COUNTER_16BIT:	return ((uint16_t *)cbf->countermap)[position];
 	case COUNTER_32BIT:	return ((uint32_t *)cbf->countermap)[position];
@@ -173,6 +180,15 @@ static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
 
 static inline void set_counter(const cbloomfilter *cbf, uint64_t position, uint64_t value) {
 	switch (cbf->csize) {
+	case COUNTER_4BIT:
+		uint8_t *byte = &((uint8_t *)cbf->countermap)[position / 2];
+		value = (value > 15) ? 15 : value; // 4 bit max is 15
+		if (position % 2 == 0) {
+			*byte = (*byte & 0xf0) | value; // lower nibble
+		} else {
+			*byte = (*byte & 0x0f) | (value << 4); // upper nibble
+		}
+		break;
 	case COUNTER_8BIT:
 		((uint8_t *)cbf->countermap)[position] =
 			(value > UINT8_MAX) ? UINT8_MAX : (uint8_t)value;

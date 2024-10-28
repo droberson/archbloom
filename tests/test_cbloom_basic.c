@@ -117,11 +117,26 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
-	// test creation of 16, 32, 64 bit filters
+	// test creation of 4, 16, 32, 64 bit filters
+	cbloomfilter cbf4;
 	cbloomfilter cbf16;
 	cbloomfilter cbf32;
 	cbloomfilter cbf64;
 
+	init_result = cbloom_init(&cbf4, 20, 0.01, COUNTER_4BIT);
+	if (init_result != CBF_SUCCESS) {
+		fprintf(stderr, "FAILURE: creation of 4 bit counter: %s\n",
+				cbloom_strerror(init_result));
+		return EXIT_FAILURE;
+	}
+	printf("4 bit:\n");
+	printf("\tsize: %d\n", cbf4.size);
+	printf("\thash count: %d\n", cbf4.hashcount);
+	printf("\tcountermap size: %d\n", cbf4.countermap_size);
+	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf4.csize + 3)) / 2);
+	cbloom_destroy(&cbf4);
+
+	// 16 bit
 	init_result = cbloom_init(&cbf16, 20, 0.01, COUNTER_16BIT);
 	if (init_result != CBF_SUCCESS) {
 		fprintf(stderr, "FAILURE: creation of 16 bit counter: %s\n",
@@ -132,7 +147,7 @@ int main() {
 	printf("\tsize: %d\n", cbf16.size);
 	printf("\thash count: %d\n", cbf16.hashcount);
 	printf("\tcountermap size: %d\n", cbf16.countermap_size);
-	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf16.csize + 3)));
+	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf16.csize + 3)) / 2);
 	cbloom_destroy(&cbf16);
 
 	// 32 bit
@@ -147,7 +162,7 @@ int main() {
 	printf("\tsize: %d\n", cbf32.size);
 	printf("\thash count: %d\n", cbf32.hashcount);
 	printf("\tcountermap size: %d\n", cbf32.countermap_size);
-	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)));
+	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)) / 2);
 
 	cbloom_add_string(&cbf32, "the last metroid is in captivity");
 	cbloom_add_string(&cbf32, "the galaxy is at peace.");
@@ -175,7 +190,7 @@ int main() {
 	printf("\tsize: %d\n", cbf32.size);
 	printf("\thash count: %d\n", cbf32.hashcount);
 	printf("\tcountermap size: %d\n", cbf32.countermap_size);
-	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)));
+	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf32.csize + 3)) / 2);
 
 	result = cbloom_lookup_string(&cbf32, "the last metroid is in captivity");
 	if (result != true) {
@@ -195,7 +210,7 @@ int main() {
 	printf("\tsize: %d\n", cbf64.size);
 	printf("\thash count: %d\n", cbf64.hashcount);
 	printf("\tcountermap size: %d\n", cbf64.countermap_size);
-	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf64.csize + 3)));
+	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf64.csize + 3)) / 2);
 	cbloom_destroy(&cbf64);
 
 	// cleanup
