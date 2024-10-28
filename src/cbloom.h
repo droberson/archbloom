@@ -235,11 +235,5 @@ const char     *cbloom_strerror(cbloom_error_t);
  * filters are working as they intend or to determine appropriate
  * rates to decay counters.
  *
- * "In practice, when a counter does overflow, one approach is to
- * leave it at its maximum value. This can cause a later false
- * negative only if eventually the counter goes down to 0 when it
- * should have remained nonzero. If the deletions are random, the
- * expected time to this event is relatively large." - Broder &
- * Mitzenmacher
 */
 #endif /* CBLOOM_H */
