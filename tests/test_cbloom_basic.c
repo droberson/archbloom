@@ -211,6 +211,22 @@ int main() {
 	printf("\thash count: %d\n", cbf64.hashcount);
 	printf("\tcountermap size: %d\n", cbf64.countermap_size);
 	printf("\tcounter size (bits): %d\n", (size_t)pow(2, (cbf64.csize + 3)) / 2);
+
+	// test cbloom_count()
+	printf("testing cbloom_count()\n");
+	cbloom_add_string(&cbf64, "string");
+	cbloom_add_string(&cbf64, "string");
+	cbloom_add_string(&cbf64, "string");
+	cbloom_add_string(&cbf64, "string");
+	cbloom_add_string(&cbf64, "string");
+
+	size_t element_count;
+	element_count = cbloom_count_string(&cbf64, "string");
+	if (element_count != 5) {
+		fprintf(stderr, "FAILURE: count is %d. should be 5\n", element_count);
+		return EXIT_FAILURE;
+	}
+
 	cbloom_destroy(&cbf64);
 
 	// cleanup

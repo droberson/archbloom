@@ -247,8 +247,6 @@ static void dec_counter(cbloomfilter *cbf, uint64_t position) {
  *
  * @return A `size_t` value representing the approximate count of the
  * element in the filter.
- *
- * TODO: test
  */
 size_t cbloom_count(const cbloomfilter *cbf, void *element, size_t len) {
 	uint64_t hashes[cbf->hashcount];
