@@ -427,6 +427,53 @@ void cbloom_add_string(cbloomfilter *cbf, const char *element) {
 }
 
 /**
+ * @brief Add an element to the counting Bloom filter only if it is
+ * not already present.
+ *
+ * This function checks for the presence of an element in the counting
+ * Bloom filter.  If the element is already present (based on the
+ * `cbloom_lookup` result), no action is taken.  Otherwise, the
+ * element is added using `cbloom_add`.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Pointer to the element data to add.
+ * @param len Length of the element data.
+ * @return `true` if the element was already present.
+ * @return `false` if it  was newly added.
+ *
+ * TODO: test
+ */
+bool cbloom_add_if_not_present(cbloomfilter *cbf, void *element, const size_t len) {
+	if (cbloom_lookup(cbf, element, len)) {
+		return true;
+	}
+
+	cbloom_add(cbf, element, len);
+	return false;
+}
+
+/**
+ * @brief Add a string element to the counting Bloom filter only if it
+ * is not already present.
+ *
+ * This function is a string-specific wrapper for
+ * `cbloom_add_if_not_present`. It checks for the presence of a string
+ * element in the counting Bloom filter. If the element is already
+ * present, no action is taken; otherwise, the element is added.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Null-terminated string to add to the filter if not
+ *        already present.
+ * @return `true` if the element was already present.
+ * @return `false if it was newly added.
+ */
+bool cbloom_add_if_not_present_string(cbloomfilter *cbf, const char *element) {
+	return cbloom_add_if_not_present(cbf, (void *)element, strlen(element));
+}
+
+
+
+/**
  * @brief Remove an element from the counting Bloom filter.
  *
  * This function decreases the count of the specified element in the
@@ -606,6 +653,51 @@ float cbloom_saturation(const cbloomfilter *cbf) {
  */
 void cbloom_clear(cbloomfilter *cbf) {
 	memset(cbf->countermap, 0, cbf->countermap_size);
+}
+
+/**
+ * @brief Clear all counters associated with an element from the
+ * counting Bloom filter.
+ *
+ * This function sets all positions related to a given element to
+ * zero, effectively clearing the counter.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Pointer to the element data to be removed.
+ * @param len Length of the element data.
+ * @return `true` if counters were successfully cleared, `false` otherwise.
+ *
+ * TODO: test
+ */
+bool cbloom_clear_element(cbloomfilter *cbf, void *element, size_t len) {
+	uint64_t hashes[cbf->hashcount];
+	uint64_t position;
+
+	mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
+
+	for (int i = 0; i < cbf->hashcount; i++) {
+		position = hashes[i] % cbf->size;
+
+		set_counter(cbf, position, 0);
+	}
+
+	return true;
+}
+
+/**
+ * @brief Clear all counters associated with a string element from the
+ * counting Bloom filter.
+ *
+ * This is a convenience function to handle strings with
+ * `cbloom_clear_element`.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Null-terminated string to clear from the Bloom filter.
+ * @return `true` if counters were successfully cleared, `false` if
+ *         there was an error.
+ */
+bool cbloom_clear_element_string(cbloomfilter *cbf, const char *element) {
+    return cbloom_clear_element(cbf, (void *)element, strlen(element));
 }
 
 /**
