@@ -240,12 +240,25 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
-	// cbloom_get_average_count()
+	// test cbloom_get_average_count()
 	printf("testing cbloom_get_average_count()\n");
 	float cbloom_avg;
 	cbloom_avg = cbloom_get_average_count(&cbf64);
 	if (cbloom_avg != 3.0) {
 		fprintf(stderr, "FAILURE: average should be 3.0. is %f\n", cbloom_avg);
+		return EXIT_FAILURE;
+	}
+
+	// test cbloom_add_if_not_present()
+	printf("testing cbloom_add_if_not_present()\n");
+	result = cbloom_add_if_not_present_string(&cbf64, "shouldnt be present");
+	if (result != false) {
+		fprintf(stderr, "FAILURE: cbloom_add_if_not_present()\n");
+		return EXIT_FAILURE;
+	}
+	result = cbloom_lookup_string(&cbf64, "shouldnt be present");
+	if (result != true) {
+		fprintf(stderr, "FAILURE: cbloom_lookup() after cbloom_add_if_not_present()\n");
 		return EXIT_FAILURE;
 	}
 

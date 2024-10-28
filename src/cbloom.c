@@ -133,6 +133,8 @@ void cbloom_destroy(cbloomfilter *cbf) {
  *
  * @return `true` if the name was successfully set.
  * @return `false` if the name length exceeds `CBLOOM_MAX_NAME_LENGTH`.
+ *
+ * TODO: test
  */
 bool cbloom_set_name(cbloomfilter *cbf, const char *name) {
 	if (strlen(name) > CBLOOM_MAX_NAME_LENGTH) {
@@ -155,6 +157,8 @@ bool cbloom_set_name(cbloomfilter *cbf, const char *name) {
  * @param cbf Pointer to the counting Bloom filter.
  *
  * @return Pointer to the null-terminated name of the filter.
+ *
+ * TODO: test
  */
 const char *cbloom_get_name(cbloomfilter *cbf) {
 	return cbf->name;
@@ -451,8 +455,6 @@ void cbloom_add_string(cbloomfilter *cbf, const char *element) {
  * @param len Length of the element data.
  * @return `true` if the element was already present.
  * @return `false` if it  was newly added.
- *
- * TODO: test
  */
 bool cbloom_add_if_not_present(cbloomfilter *cbf, void *element, const size_t len) {
 	if (cbloom_lookup(cbf, element, len)) {
