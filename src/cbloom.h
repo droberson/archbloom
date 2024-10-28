@@ -192,7 +192,7 @@ cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
 
 size_t          cbloom_count(const cbloomfilter *, void *, size_t);
 size_t          cbloom_count_string(const cbloomfilter *, char *);
-float cbloom_get_average_count(cbloomfilter *); // TODO
+float           cbloom_get_average_count(cbloomfilter *);
 size_t          cbloom_count_elements_above_threshold(const cbloomfilter *,
                                                       uint64_t);
 size_t          cbloom_saturation_count(const cbloomfilter *);

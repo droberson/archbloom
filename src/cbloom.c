@@ -289,7 +289,7 @@ size_t cbloom_count_string(const cbloomfilter *cbf, char *element) {
  * TODO: test
  */
 size_t cbloom_count_elements_above_threshold(const cbloomfilter *cbf, uint64_t threshold) {
-    size_t count = 0;
+    size_t count        = 0;
     size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
 
     for (size_t i = 0; i < num_counters; i++) {
@@ -300,6 +300,40 @@ size_t cbloom_count_elements_above_threshold(const cbloomfilter *cbf, uint64_t t
     }
 
     return count / cbf->hashcount;
+}
+
+/**
+ * @brief Calculate the average count of non-zero counters in the
+ * counting Bloom filter.
+ *
+ * This function computes the average count across all non-zero
+ * counters in the counting Bloom filter, giving an indication of the
+ * filter's general usage level. Zeroed counters are discarded to
+ * avoid skewing the average towards zero.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ *
+ * @return The average count as a floating-point number. If no
+ *         counters are set, returns 0.0.
+ */
+float cbloom_get_average_count(cbloomfilter *cbf) {
+    size_t   num_counters      = cbf->countermap_size / (cbf->csize / 8);
+    uint64_t total_count       = 0;
+    size_t   non_zero_counters = 0;
+
+    for (size_t i = 0; i < num_counters; i++) {
+        uint64_t counter_value = get_counter(cbf, i);
+        if (counter_value > 0) {
+            total_count += counter_value;
+            non_zero_counters++;
+        }
+    }
+
+    if (non_zero_counters == 0) {
+        return 0.0;
+    }
+
+    return (float)total_count / non_zero_counters;
 }
 
 /**
