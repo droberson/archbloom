@@ -811,8 +811,8 @@ bloom_error_t bloom_merge(bloomfilter *result,
  * @return BF_INVALIDFILE if the two Bloom filters are not compatible.
  */
 bloom_error_t bloom_intersect(bloomfilter *result,
-							  const bloomfilter *bf1,
-							  const bloomfilter *bf2) {
+                              const bloomfilter *bf1,
+                              const bloomfilter *bf2) {
     if (bf1->size != bf2->size ||
 		bf1->hashcount != bf2->hashcount ||
 		bf1->accuracy != bf2->accuracy) {
