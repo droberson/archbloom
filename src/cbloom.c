@@ -563,6 +563,76 @@ void cbloom_remove(cbloomfilter *cbf, void *element, const size_t len) {
 }
 
 /**
+ * @brief Clear an element from the Bloom filter if any counter
+ * exceeds a specified threshold.
+ *
+ * This function hashes the element multiple times (based on
+ * `hashcount`) and checks each associated counter to see if any
+ * exceed the specified `threshold`. If any counter is above the
+ * threshold, it clears all counters for the element, effectively
+ * removing it from the filter.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Pointer to the element data to check and clear if necessary.
+ * @param len Length of the element data.
+ * @param threshold The threshold above which counters will trigger clearing.
+ *
+ * @return `true` if the element was cleared
+ * @return `false` if no counters exceeded the threshold.
+ *
+ * TODO: test
+ */
+bool cbloom_clear_if_count_above(cbloomfilter *cbf, const void *element, size_t len, size_t threshold) {
+    uint64_t hashes[cbf->hashcount];
+    bool     should_clear = false;
+
+    mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
+
+    for (size_t i = 0; i < cbf->hashcount; i++) {
+        uint64_t position = hashes[i] % cbf->size;
+        uint64_t counter_value = get_counter(cbf, position);
+
+        if (counter_value > threshold) {
+            should_clear = true;
+            break;
+        }
+    }
+
+    if (should_clear) {
+        for (size_t i = 0; i < cbf->hashcount; i++) {
+            uint64_t position = hashes[i] % cbf->size;
+            set_counter(cbf, position, 0);
+        }
+    }
+
+    return should_clear;
+}
+
+/**
+ * @brief Clear a string element from the Bloom filter if any counter
+ * exceeds a specified threshold.
+ *
+ * This function is a string-specific wrapper for
+ * `cbloom_clear_if_count_above`. It hashes the provided string
+ * element and checks if any associated counters exceed
+ * `threshold`. If so, it clears all counters for the string element.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Null-terminated string element to check and clear if
+ *        necessary.
+ * @param threshold The threshold above which counters will trigger clearing.
+ *
+ * @return `true` if the element was cleared
+ * @return `false` if no counters exceeded the threshold.
+ */
+bool cbloom_clear_if_count_above_string(cbloomfilter *cbf, const char *element, size_t threshold) {
+    return cbloom_clear_if_count_above(cbf,
+									   (void *)element,
+									   strlen(element),
+									   threshold);
+}
+
+/**
  * @brief Apply linear decay to all counters in the counting Bloom filter.
  *
  * This function decreases each counter in the counting Bloom filter by a
