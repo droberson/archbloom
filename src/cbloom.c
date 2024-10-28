@@ -500,8 +500,6 @@ bool cbloom_add_if_not_present_string(cbloomfilter *cbf, const char *element) {
  *
  * @return `true` if the element was already present.
  * @return `false` if it was newly added.
- *
- * TODO: test
  */
 bool cbloom_lookup_or_add(cbloomfilter *cbf, void *element, const size_t len) {
     uint64_t hashes[cbf->hashcount];

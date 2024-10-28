@@ -262,6 +262,20 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	// test cbloom_lookup_or_add()
+	printf("testing cbloom_lookup_or_add_string()\n");
+	result = cbloom_lookup_or_add_string(&cbf64, "shouldnt be present");
+	if (result != true) {
+		fprintf(stderr, "FAILURE: \"shouldnt be present\" should be in filter\n");
+		return EXIT_FAILURE;
+	}
+
+	result = cbloom_lookup_or_add_string(&cbf64, "shouldnt be present for real");
+	if (result != false) {
+		fprintf(stderr, "FAILURE: this shouldn't have been in the filter\n");
+		return EXIT_FAILURE;
+	}
+
 	cbloom_destroy(&cbf64);
 
 	// cleanup
