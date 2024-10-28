@@ -471,7 +471,61 @@ bool cbloom_add_if_not_present_string(cbloomfilter *cbf, const char *element) {
 	return cbloom_add_if_not_present(cbf, (void *)element, strlen(element));
 }
 
+/**
+ * @brief Check if an element is present in the counting Bloom filter;
+ * if not, add it.
+ *
+ * This function performs a combined lookup and addition for the
+ * element. It calculates the hash positions once, checks each
+ * corresponding counter, and if any counter is zero, increments all
+ * counters for the element, effectively adding it to the filter. This
+ * prevents redundant hashing and improves performance.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Pointer to the element data.
+ * @param len Length of the element data.
+ *
+ * @return `true` if the element was already present.
+ * @return `false` if it was newly added.
+ *
+ * TODO: test
+ */
+bool cbloom_lookup_or_add(cbloomfilter *cbf, void *element, const size_t len) {
+    uint64_t hashes[cbf->hashcount];
+    bool is_present = true;
 
+    mmh3_64_make_hashes(element, len, cbf->hashcount, hashes);
+
+    for (size_t i = 0; i < cbf->hashcount; i++) {
+        uint64_t position = hashes[i] % cbf->size;
+        uint64_t counter_value = get_counter(cbf, position);
+
+        if (counter_value == 0) {
+            is_present = false;
+        }
+
+		inc_counter(cbf, position);
+    }
+
+    return is_present;
+}
+
+/**
+ * @brief Check if a string element is present in the counting Bloom
+ * filter; if not, add it.
+ *
+ * This is a string-specific wrapper for `cbloom_lookup_or_add` that
+ * accepts a C-style string.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param element Null-terminated string to check and add if not present.
+ *
+ * @return `true` if the element was already present.
+ * @return `false` if it was newly added.
+ */
+bool cbloom_lookup_or_add_string(cbloomfilter *cbf, const char *element) {
+    return cbloom_lookup_or_add(cbf, (void *)element, strlen(element));
+}
 
 /**
  * @brief Remove an element from the counting Bloom filter.

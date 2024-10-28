@@ -200,11 +200,12 @@ float           cbloom_saturation(const cbloomfilter *);
 
 bool            cbloom_lookup(const cbloomfilter *, void *, const size_t);
 bool            cbloom_lookup_string(const cbloomfilter *, const char *);
-bool cbloom_lookup_or_add(cbloomfilter *, void *, const size_t); // TODO
-bool cbloom_lookup_or_add_string(cbloomfilter *, const char *); // TODO
+bool            cbloom_lookup_or_add(cbloomfilter *, void *, const size_t);
+bool            cbloom_lookup_or_add_string(cbloomfilter *, const char *);
 
 void            cbloom_add(cbloomfilter *, void *, const size_t);
 void            cbloom_add_string(cbloomfilter *, const char *);
+// TODO are these necessary?
 bool            cbloom_add_if_not_present(cbloomfilter *, void *, const size_t);
 bool            cbloom_add_if_not_present_string(cbloomfilter *, const char *);
 
