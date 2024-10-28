@@ -187,8 +187,8 @@ const char     *cbloom_get_name(cbloomfilter *);
 bool            cbloom_set_name(cbloomfilter *, const char *);
 cbloom_error_t  cbloom_save(cbloomfilter *, const char *);
 cbloom_error_t  cbloom_load(cbloomfilter *, const char *);
-cbloom_error_t cbloom_save_fd(cbloomfilter *, int); // TODO
-cbloom_error_t cbloom_load_fd(cbloomfilter *, int); // TODO
+cbloom_error_t  cbloom_save_fd(cbloomfilter *, int);
+cbloom_error_t  cbloom_load_fd(cbloomfilter *, int);
 
 size_t          cbloom_count(const cbloomfilter *, void *, size_t);
 size_t          cbloom_count_string(const cbloomfilter *, char *);

@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -880,6 +881,53 @@ cbloom_error_t cbloom_save(cbloomfilter *cbf, const char *path) {
 }
 
 /**
+ * @brief Save a counting Bloom filter to a file descriptor.
+ *
+ * This function saves the current state of the counting Bloom filter
+ * to an open file descriptor. The file format is the same as in
+ * `cbloom_save`.
+ *
+ * @param cbf Counting Bloom filter to save.
+ * @param fd File descriptor where the filter will be saved.
+ *
+ * @return CBF_SUCCESS on success.
+ * @return CBF_FWRITE if there was an error writing to the file descriptor.
+ *
+ * TODO: test
+ */
+cbloom_error_t cbloom_save_fd(cbloomfilter *cbf, int fd) {
+    cbloomfilter_file cbff = {0};
+
+    cbff.magic[0] = '!';
+    cbff.magic[1] = 'c';
+    cbff.magic[2] = 'b';
+    cbff.magic[3] = 'l';
+    cbff.magic[4] = 'o';
+    cbff.magic[5] = 'o';
+    cbff.magic[6] = 'm';
+    cbff.magic[7] = '!';
+
+    cbff.size            = cbf->size;
+    cbff.csize           = cbf->csize;
+    cbff.hashcount       = cbf->hashcount;
+    cbff.expected        = cbf->expected;
+    cbff.accuracy        = cbf->accuracy;
+    cbff.countermap_size = cbf->countermap_size;
+    strncpy((char *)cbff.name, cbf->name, CBLOOM_MAX_NAME_LENGTH);
+    cbff.name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+
+    if (write(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
+        return CBF_FWRITE;
+    }
+
+    if (write(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
+        return CBF_FWRITE;
+    }
+
+    return CBF_SUCCESS;
+}
+
+/**
  * @brief Load a counting Bloom filter from a file on disk.
  *
  * This function reads the state of a counting Bloom filter from a
@@ -946,6 +994,61 @@ cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 	fclose(fp);
 
 	return CBF_SUCCESS;
+}
+
+/**
+ * @brief Load a counting Bloom filter from a file descriptor.
+ *
+ * This function reads the state of a counting Bloom filter from an
+ * open file descriptor and populates the `cbloomfilter` structure.
+ *
+ * @param cbf Pointer to the counting Bloom filter struct to populate.
+ * @param fd File descriptor from which the filter will be loaded.
+ *
+ * @return CBF_SUCCESS on success.
+ * @return CBF_FSTAT if the stat() system call failed on the file descriptor.
+ * @return CBF_FREAD if there was an error reading from the file descriptor.
+ * @return CBF_INVALIDFILE if the file format is invalid or unparseable.
+ * @return CBF_OUTOFMEMORY if memory allocation failed.
+ *
+ * TODO: test
+ */
+cbloom_error_t cbloom_load_fd(cbloomfilter *cbf, int fd) {
+    struct stat sb;
+    cbloomfilter_file cbff;
+
+    if (fstat(fd, &sb) == -1) {
+        return CBF_FSTAT;
+    }
+
+    if (read(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
+        return CBF_FREAD;
+    }
+
+    cbf->size            = cbff.size;
+    cbf->csize           = cbff.csize;
+    cbf->hashcount       = cbff.hashcount;
+    cbf->expected        = cbff.expected;
+    cbf->accuracy        = cbff.accuracy;
+    cbf->countermap_size = cbff.countermap_size;
+    strncpy(cbf->name, (char *)cbff.name, CBLOOM_MAX_NAME_LENGTH);
+    cbf->name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+
+    if (sizeof(cbloomfilter_file) + cbf->countermap_size != sb.st_size) {
+        return CBF_INVALIDFILE;
+    }
+
+    cbf->countermap = malloc(cbf->countermap_size);
+    if (cbf->countermap == NULL) {
+        return CBF_OUTOFMEMORY;
+    }
+
+    if (read(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
+        free(cbf->countermap);
+        return CBF_FREAD;
+    }
+
+    return CBF_SUCCESS;
 }
 
 /**
