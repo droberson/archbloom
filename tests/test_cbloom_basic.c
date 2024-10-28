@@ -240,6 +240,15 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	// cbloom_get_average_count()
+	printf("testing cbloom_get_average_count()\n");
+	float cbloom_avg;
+	cbloom_avg = cbloom_get_average_count(&cbf64);
+	if (cbloom_avg != 3.0) {
+		fprintf(stderr, "FAILURE: average should be 3.0. is %f\n", cbloom_avg);
+		return EXIT_FAILURE;
+	}
+
 	cbloom_destroy(&cbf64);
 
 	// cleanup
