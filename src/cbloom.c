@@ -272,6 +272,37 @@ size_t cbloom_count_string(const cbloomfilter *cbf, char *element) {
 }
 
 /**
+ * @brief Estimate the number of unique elements with counters above a
+ * specified threshold.
+ *
+ * This function iterates over the counters in the counting Bloom
+ * filter, counting the number of counters that exceed a specified
+ * threshold. The count is then divided by `hashcount` to provide an
+ * estimate of the number of unique elements that likely exceed this
+ * threshold.
+ *
+ * @param cbf Pointer to the counting Bloom filter.
+ * @param threshold The counter value threshold to compare against.
+ * @return An approximate count of unique elements with counters above
+ *         the threshold.
+ *
+ * TODO: test
+ */
+size_t cbloom_count_elements_above_threshold(const cbloomfilter *cbf, uint64_t threshold) {
+    size_t count = 0;
+    size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
+
+    for (size_t i = 0; i < num_counters; i++) {
+        uint64_t counter_value = get_counter(cbf, i);
+        if (counter_value > threshold) {
+            count++;
+        }
+    }
+
+    return count / cbf->hashcount;
+}
+
+/**
  * @brief Check if an element is likely in the counting Bloom filter.
  *
  * This function checks whether the specified element is likely
