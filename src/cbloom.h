@@ -119,7 +119,7 @@ typedef enum {
  * filter.
  */
 typedef struct {
-    uint64_t      size; /**< Size of the counting Bloom filter in bits. */
+    uint64_t      size; /**< Size of the counting Bloom filter. */
     uint64_t      hashcount; /**< Number of hash functions used per element. */
     uint64_t      countermap_size; /**< Total size of the counter map. */
 	uint64_t      expected; /**< Expected number of elements in the filter. */

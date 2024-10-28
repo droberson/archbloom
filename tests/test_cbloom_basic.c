@@ -219,11 +219,24 @@ int main() {
 	cbloom_add_string(&cbf64, "string");
 	cbloom_add_string(&cbf64, "string");
 	cbloom_add_string(&cbf64, "string");
-
+	cbloom_add_string(&cbf64, "another string");
+	cbloom_add_string(&cbf64, "another string");
+	cbloom_add_string(&cbf64, "another string");
+	cbloom_add_string(&cbf64, "one");
 	size_t element_count;
 	element_count = cbloom_count_string(&cbf64, "string");
 	if (element_count != 5) {
 		fprintf(stderr, "FAILURE: count is %d. should be 5\n", element_count);
+		return EXIT_FAILURE;
+	}
+
+	// test cbloom_count_elements_above_threshold()
+	printf("testing cbloom_count_elements_above_threshold()\n");
+	size_t elements_above;
+	elements_above = cbloom_count_elements_above_threshold(&cbf64, 1);
+	if (elements_above != 2) {
+		fprintf(stderr, "FAILURE: elements_above should be 2, is %d\n",
+				elements_above);
 		return EXIT_FAILURE;
 	}
 

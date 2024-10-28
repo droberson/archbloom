@@ -300,14 +300,11 @@ size_t cbloom_count_string(const cbloomfilter *cbf, char *element) {
  * @param threshold The counter value threshold to compare against.
  * @return An approximate count of unique elements with counters above
  *         the threshold.
- *
- * TODO: test
  */
 size_t cbloom_count_elements_above_threshold(const cbloomfilter *cbf, uint64_t threshold) {
     size_t count        = 0;
-    size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
 
-    for (size_t i = 0; i < num_counters; i++) {
+    for (size_t i = 0; i < cbf->size; i++) {
         uint64_t counter_value = get_counter(cbf, i);
         if (counter_value > threshold) {
             count++;
@@ -332,11 +329,10 @@ size_t cbloom_count_elements_above_threshold(const cbloomfilter *cbf, uint64_t t
  *         counters are set, returns 0.0.
  */
 float cbloom_get_average_count(cbloomfilter *cbf) {
-    size_t   num_counters      = cbf->countermap_size / (cbf->csize / 8);
     uint64_t total_count       = 0;
     size_t   non_zero_counters = 0;
 
-    for (size_t i = 0; i < num_counters; i++) {
+    for (size_t i = 0; i < cbf->size; i++) {
         uint64_t counter_value = get_counter(cbf, i);
         if (counter_value > 0) {
             total_count += counter_value;
@@ -664,9 +660,7 @@ bool cbloom_clear_if_count_above_string(cbloomfilter *cbf, const char *element, 
  * TODO: test
  */
 void cbloom_apply_linear_decay(cbloomfilter *cbf, uint64_t decay_amount) {
-	size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
-
-	for (size_t i = 0; i < num_counters; i++) {
+	for (size_t i = 0; i < cbf->size; i++) {
 		uint64_t counter_value = get_counter(cbf, i);
 		if (counter_value == 0) {
 			continue; // skip zeroed counters
@@ -709,9 +703,7 @@ void cbloom_apply_exponential_decay(cbloomfilter *cbf, float decay_factor) {
         return; // TODO error reporting?
     }
 
-	size_t num_counters = cbf->countermap_size / (cbf->csize / 8);
-
-	for (size_t i = 0; i < num_counters; i++) {
+	for (size_t i = 0; i < cbf->size; i++) {
 		uint64_t counter_value = get_counter(cbf, i);
 		if (counter_value == 0) {
 			continue; // skip zeroed counters
