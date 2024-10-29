@@ -486,6 +486,23 @@ bool tdbloom_reset_if_expired_string(tdbloom *tdbf, const char *element) {
 	return tdbloom_reset_if_expired(tdbf, element, strlen(element));
 }
 
+// TODO document
+bool tdbloom_set_name(tdbloom *tdbf, const char *name) {
+	if (strlen(name) > TDBLOOM_MAX_NAME_LENGTH) {
+		return false;
+	}
+
+	strncpy(tdbf->name, name, TDBLOOM_MAX_NAME_LENGTH);
+	tdbf->name[TDBLOOM_MAX_NAME_LENGTH] = '\0';
+
+	return true;
+}
+
+// TODO document
+const char *tdbloom_get_name(const tdbloom *tdbf) {
+	return tdbf->name;
+}
+
 /**
  * @brief Save a time-decaying Bloom filter to disk.
  *

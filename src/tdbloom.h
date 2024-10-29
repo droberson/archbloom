@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define TDBLOOM_MAX_NAME_LENGTH 255
+
 /**
  * @brief Error handling return values for time-decaying Bloom filter
  * operations.
@@ -83,6 +85,7 @@ typedef struct {
     float   accuracy;      /**< Desired false positive rate (e.g., 0.01 for 99.99% accuracy). */
     size_t  max_time;      /**< Maximum possible timestamp value in the filter. */
     int     bytes;         /**< Size of each timestamp in bytes. */
+	char    name[TDBLOOM_MAX_NAME_LENGTH + 1];
     void   *filter;        /**< Pointer to the array of time_t elements representing timestamps. */
 } tdbloom;
 
@@ -93,13 +96,13 @@ tdbloom_error_t  tdbloom_init(tdbloom *,
                               const float,
                               const size_t);
 void             tdbloom_destroy(tdbloom *);
-void tdbloom_set_name(tdbloom *, const char *); // TODO
-char *tdbloom_get_name(tdbloom *); // TODO
+bool             tdbloom_set_name(tdbloom *, const char *);
+const char      *tdbloom_get_name(const tdbloom *);
 
 void             tdbloom_clear(tdbloom *);
 size_t           tdbloom_clear_expired(tdbloom *);
 size_t           tdbloom_count_expired(const tdbloom *);
-size_t tdbloom_saturation_count(const tdbloom); // TODO
+size_t tdbloom_saturation_count(const tdbloom *); // TODO
 
 void             tdbloom_reset_start_time(tdbloom *);
 void tdbloom_adjust_timeout(tdbloom *, size_t new_timeout); // TODO
@@ -127,11 +130,11 @@ tdbloom_error_t tdbloom_load_fd(tdbloom *, int fd); // TODO
 
 const char      *tdbloom_strerror(tdbloom_error_t);
 
-bool tdbloom_was_active_within(const tdcbloom *, const void *element, size_t size, time_t start, time_t end); // TODO
-time_t tdcbloom_get_last_access_time(const tdcbloom *filter, const void *element, size_t size); // TODO
-void tdbloom_expire_below_count(tdcbloom *filter, size_t threshold_count); // TODO
-void tdbloom_expire_older_than(tdcbloom *filter, time_t max_age); // TODO
-void tdbloom_adjust_timeout(tdcbloom*, size_t); // TODO
+bool tdbloom_was_active_within(const tdbloom *, const void *element, size_t size, time_t start, time_t end); // TODO
+time_t tdbloom_get_last_access_time(const tdbloom *filter, const void *element, size_t size); // TODO
+void tdbloom_expire_below_count(tdbloom *filter, size_t threshold_count); // TODO
+void tdbloom_expire_older_than(tdbloom *filter, time_t max_age); // TODO
+void tdbloom_adjust_timeout(tdbloom*, size_t); // TODO
 time_t tdbloom_get_average_lifetime(const tdbloom *); // TODO
 bool tdbloom_expire_by_frequency(tdbloom *filter, size_t min_frequency); // TODO
 
