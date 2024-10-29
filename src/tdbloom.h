@@ -62,6 +62,8 @@ const char *tdbloom_errors[] = {
 	"Invalid counter size"     /**< TDBF_INVALIDCOUNTERSIZE: Counter size is invalid. */
 };
 
+// TODO file format structure
+
 /**
  * @brief Structure for a time-decaying Bloom filter.
  *
@@ -91,33 +93,46 @@ tdbloom_error_t  tdbloom_init(tdbloom *,
                               const float,
                               const size_t);
 void             tdbloom_destroy(tdbloom *);
+void tdbloom_set_name(tdbloom *, const char *); // TODO
+char *tdbloom_get_name(tdbloom *); // TODO
+
 void             tdbloom_clear(tdbloom *);
 size_t           tdbloom_clear_expired(tdbloom *);
 size_t           tdbloom_count_expired(const tdbloom *);
+size_t tdbloom_saturation_count(const tdbloom); // TODO
+
 void             tdbloom_reset_start_time(tdbloom *);
+void tdbloom_adjust_timeout(tdbloom *, size_t new_timeout); // TODO
+
 float            tdbloom_saturation(const tdbloom *);
+
 void             tdbloom_add(tdbloom *, const void *, const size_t);
 void             tdbloom_add_string(tdbloom *, const char *);
+
 bool             tdbloom_lookup(const tdbloom *, const void *, const size_t);
 bool             tdbloom_lookup_string(const tdbloom *, const char *);
+bool tdbloom_lookup_or_add(tdbloom *, const void *, const size_t); // TODO
+bool tdbloom_lookup_or_add_string(tdbloom *, const char *); // TODO
+
 bool             tdbloom_has_expired(const tdbloom, const void *, size_t);
 bool             tdbloom_has_expired_string(const tdbloom, const char *);
 bool             tdbloom_reset_if_expired(tdbloom *, const void *, size_t);
 bool             tdbloom_reset_if_expired_string(tdbloom *, const char *);
+bool tdbloom_age_element(tdbloom *, const void *element, size_t len, size_t amount); // TODO
 
-tdbloom_error_t  tdbloom_save(tdbloom, const char *);
-tdbloom_error_t  tdbloom_load(tdbloom *, const char *);
+tdbloom_error_t  tdbloom_save(tdbloom, const char *); // TODO refactor
+tdbloom_error_t  tdbloom_load(tdbloom *, const char *); // TODO refactor
+tdbloom_error_t tdbloom_save_fd(tdbloom, int fd); // TODO
+tdbloom_error_t tdbloom_load_fd(tdbloom *, int fd); // TODO
+
 const char      *tdbloom_strerror(tdbloom_error_t);
 
-/*
- * TODO: potential additions
- * bool tdbloom_age_element(tdbloom *, const void *element, size_t len, size_t amount);
- * void tdbloom_adjust_timeout(tdbloom *, size_t new_timeout);
- * size_t tdbloom_saturation_count(const tdbloom);
- * bool tdbloom_was_active_within(const tdcbloom *cbf, const void *element, size_t size, time_t start, time_t end);
- * time_t tdcbloom_get_last_access_time(const tdcbloom *filter, const void *element, size_t size);
- * void tdbloom_expire_below_count(tdcbloom *filter, size_t threshold_count);
- * void tdbloom_expire_older_than(tdcbloom *filter, time_t max_age);
- * void tdbloom_adjust_timeout(tdcbloom*, size_t);
- */
+bool tdbloom_was_active_within(const tdcbloom *, const void *element, size_t size, time_t start, time_t end); // TODO
+time_t tdcbloom_get_last_access_time(const tdcbloom *filter, const void *element, size_t size); // TODO
+void tdbloom_expire_below_count(tdcbloom *filter, size_t threshold_count); // TODO
+void tdbloom_expire_older_than(tdcbloom *filter, time_t max_age); // TODO
+void tdbloom_adjust_timeout(tdcbloom*, size_t); // TODO
+time_t tdbloom_get_average_lifetime(const tdbloom *); // TODO
+bool tdbloom_expire_by_frequency(tdbloom *filter, size_t min_frequency); // TODO
+
 #endif /* TDBLOOM_H */
