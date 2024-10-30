@@ -32,15 +32,15 @@
  */
 typedef enum {
 	CBF_SUCCESS = 0,        /**< Operation completed successfully. */
-    CBF_OUTOFMEMORY,        /**< Memory allocation failed. */
-    CBF_INVALIDCOUNTERSIZE, /**< Invalid counter size specified. */
-    CBF_FOPEN,              /**< Failed to open file. */
-    CBF_FWRITE,             /**< Failed to write to file. */
-    CBF_FREAD,              /**< Failed to read from file. */
-    CBF_FSTAT,              /**< Failed to stat() the file descriptor. */
-    CBF_INVALIDFILE,        /**< Invalid or unparseable file format. */
-    // dummy enum to use as a counter. do not add entries after CBF_ERRORCOUNT.
-    CBF_ERRORCOUNT          /**< Total number of error types. */
+	CBF_OUTOFMEMORY,        /**< Memory allocation failed. */
+	CBF_INVALIDCOUNTERSIZE, /**< Invalid counter size specified. */
+	CBF_FOPEN,              /**< Failed to open file. */
+	CBF_FWRITE,             /**< Failed to write to file. */
+	CBF_FREAD,              /**< Failed to read from file. */
+	CBF_FSTAT,              /**< Failed to stat() the file descriptor. */
+	CBF_INVALIDFILE,        /**< Invalid or unparseable file format. */
+	// dummy enum to use as a counter. do not add entries after CBF_ERRORCOUNT.
+	CBF_ERRORCOUNT          /**< Total number of error types. */
 } cbloom_error_t;
 
 const char *cbloom_errors[] = {
@@ -64,10 +64,10 @@ const char *cbloom_errors[] = {
  */
 typedef enum {
 	COUNTER_4BIT,  /**< 4-bit counter, for very small element counts. (<=15) */
-    COUNTER_8BIT,  /**< 8-bit counter, for small element counts. (<=255) */
-    COUNTER_16BIT, /**< 16-bit counter, allows for moderate element counts. */
-    COUNTER_32BIT, /**< 32-bit counter, suitable for larger element counts. */
-    COUNTER_64BIT  /**< 64-bit counter, for very large element counts. */
+	COUNTER_8BIT,  /**< 8-bit counter, for small element counts. (<=255) */
+	COUNTER_16BIT, /**< 16-bit counter, allows for moderate element counts. */
+	COUNTER_32BIT, /**< 32-bit counter, suitable for larger element counts. */
+	COUNTER_64BIT  /**< 64-bit counter, for very large element counts. */
 } counter_size;
 
 /**
@@ -119,14 +119,14 @@ typedef enum {
  * filter.
  */
 typedef struct {
-    uint64_t      size; /**< Size of the counting Bloom filter. */
-    uint64_t      hashcount; /**< Number of hash functions used per element. */
-    uint64_t      countermap_size; /**< Total size of the counter map. */
+	uint64_t      size; /**< Size of the counting Bloom filter. */
+	uint64_t      hashcount; /**< Number of hash functions used per element. */
+	uint64_t      countermap_size; /**< Total size of the counter map. */
 	uint64_t      expected; /**< Expected number of elements in the filter. */
 	float         accuracy; /**< Desired false positive rate (e.g., 0.01 for 1% false positive rate). */
 	char          name[CBLOOM_MAX_NAME_LENGTH + 1]; /**< Null-terminated name of the filter. */
-    counter_size  csize;  /**< Size of the counter (8, 16, 32, or 64 bits). */
-    void         *countermap;  /**< Pointer to a map of element counters. */
+	counter_size  csize;  /**< Size of the counter (8, 16, 32, or 64 bits). */
+	void         *countermap;  /**< Pointer to a map of element counters. */
 } cbloomfilter;
 
 /**
