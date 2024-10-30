@@ -902,35 +902,35 @@ cbloom_error_t cbloom_save(cbloomfilter *cbf, const char *path) {
  * TODO: test
  */
 cbloom_error_t cbloom_save_fd(cbloomfilter *cbf, int fd) {
-    cbloomfilter_file cbff = {0};
+	cbloomfilter_file cbff = {0};
 
-    cbff.magic[0] = '!';
-    cbff.magic[1] = 'c';
-    cbff.magic[2] = 'b';
-    cbff.magic[3] = 'l';
-    cbff.magic[4] = 'o';
-    cbff.magic[5] = 'o';
-    cbff.magic[6] = 'm';
-    cbff.magic[7] = '!';
+	cbff.magic[0] = '!';
+	cbff.magic[1] = 'c';
+	cbff.magic[2] = 'b';
+	cbff.magic[3] = 'l';
+	cbff.magic[4] = 'o';
+	cbff.magic[5] = 'o';
+	cbff.magic[6] = 'm';
+	cbff.magic[7] = '!';
 
-    cbff.size            = cbf->size;
-    cbff.csize           = cbf->csize;
-    cbff.hashcount       = cbf->hashcount;
-    cbff.expected        = cbf->expected;
-    cbff.accuracy        = cbf->accuracy;
-    cbff.countermap_size = cbf->countermap_size;
-    strncpy((char *)cbff.name, cbf->name, CBLOOM_MAX_NAME_LENGTH);
-    cbff.name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+	cbff.size            = cbf->size;
+	cbff.csize           = cbf->csize;
+	cbff.hashcount       = cbf->hashcount;
+	cbff.expected        = cbf->expected;
+	cbff.accuracy        = cbf->accuracy;
+	cbff.countermap_size = cbf->countermap_size;
+	strncpy((char *)cbff.name, cbf->name, CBLOOM_MAX_NAME_LENGTH);
+	cbff.name[CBLOOM_MAX_NAME_LENGTH] = '\0';
 
-    if (write(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
-        return CBF_FWRITE;
-    }
+	if (write(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
+		return CBF_FWRITE;
+	}
 
-    if (write(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
-        return CBF_FWRITE;
-    }
+	if (write(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
+		return CBF_FWRITE;
+	}
 
-    return CBF_SUCCESS;
+	return CBF_SUCCESS;
 }
 
 /**
@@ -952,7 +952,7 @@ cbloom_error_t cbloom_save_fd(cbloomfilter *cbf, int fd) {
  */
 cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
 	FILE              *fp;
-    struct stat        sb;
+	struct stat        sb;
 	cbloomfilter_file  cbff;
 
 	fp = fopen(path, "rb");
@@ -1020,41 +1020,41 @@ cbloom_error_t cbloom_load(cbloomfilter *cbf, const char *path) {
  * TODO: test
  */
 cbloom_error_t cbloom_load_fd(cbloomfilter *cbf, int fd) {
-    struct stat sb;
-    cbloomfilter_file cbff;
+	struct stat sb;
+	cbloomfilter_file cbff;
 
-    if (fstat(fd, &sb) == -1) {
-        return CBF_FSTAT;
-    }
+	if (fstat(fd, &sb) == -1) {
+		return CBF_FSTAT;
+	}
 
-    if (read(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
-        return CBF_FREAD;
-    }
+	if (read(fd, &cbff, sizeof(cbloomfilter_file)) != sizeof(cbloomfilter_file)) {
+		return CBF_FREAD;
+	}
 
-    cbf->size            = cbff.size;
-    cbf->csize           = cbff.csize;
-    cbf->hashcount       = cbff.hashcount;
-    cbf->expected        = cbff.expected;
-    cbf->accuracy        = cbff.accuracy;
-    cbf->countermap_size = cbff.countermap_size;
-    strncpy(cbf->name, (char *)cbff.name, CBLOOM_MAX_NAME_LENGTH);
-    cbf->name[CBLOOM_MAX_NAME_LENGTH] = '\0';
+	cbf->size            = cbff.size;
+	cbf->csize           = cbff.csize;
+	cbf->hashcount       = cbff.hashcount;
+	cbf->expected        = cbff.expected;
+	cbf->accuracy        = cbff.accuracy;
+	cbf->countermap_size = cbff.countermap_size;
+	strncpy(cbf->name, (char *)cbff.name, CBLOOM_MAX_NAME_LENGTH);
+	cbf->name[CBLOOM_MAX_NAME_LENGTH] = '\0';
 
-    if (sizeof(cbloomfilter_file) + cbf->countermap_size != sb.st_size) {
-        return CBF_INVALIDFILE;
-    }
+	if (sizeof(cbloomfilter_file) + cbf->countermap_size != sb.st_size) {
+		return CBF_INVALIDFILE;
+	}
 
-    cbf->countermap = malloc(cbf->countermap_size);
-    if (cbf->countermap == NULL) {
-        return CBF_OUTOFMEMORY;
-    }
+	cbf->countermap = malloc(cbf->countermap_size);
+	if (cbf->countermap == NULL) {
+		return CBF_OUTOFMEMORY;
+	}
 
-    if (read(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
-        free(cbf->countermap);
-        return CBF_FREAD;
-    }
+	if (read(fd, cbf->countermap, cbf->countermap_size) != (ssize_t)cbf->countermap_size) {
+		free(cbf->countermap);
+		return CBF_FREAD;
+	}
 
-    return CBF_SUCCESS;
+	return CBF_SUCCESS;
 }
 
 /**
