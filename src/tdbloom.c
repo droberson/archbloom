@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <limits.h>
 #include <sys/stat.h>
@@ -390,30 +391,31 @@ bool tdbloom_lookup_string(const tdbloom *tdbf, const char *element) {
  * @param element Pointer to the element to check for expiration.
  * @param len Length of the element in bytes.
  *
- * @return true if the element has expired, false if the element is either still valid or never existed.
+ * @return true if the element has expired
+ * @return false if the element is either still valid or never existed.
  *
  * TODO: test
  */
-bool tdbloom_has_expired(const tdbloom tdbf, const void *element, size_t len) {
+bool tdbloom_has_expired(const tdbloom *tdbf, const void *element, size_t len) {
 	uint64_t result;
-	uint64_t hashes[tdbf.hashcount];
+	uint64_t hashes[tdbf->hashcount];
 	time_t   now = get_monotonic_time();
-	size_t   ts  = ((now - tdbf.start_time) % tdbf.max_time + tdbf.max_time) % tdbf.max_time + 1;
+	size_t   ts  = ((now - tdbf->start_time) % tdbf->max_time + tdbf->max_time) % tdbf->max_time + 1;
 
-	mmh3_64_make_hashes(element, len, tdbf.hashcount, hashes);
+	mmh3_64_make_hashes(element, len, tdbf->hashcount, hashes);
 
-	for (size_t i = 0; i < tdbf.hashcount; i++) {
-		result = hashes[i] % tdbf.size;
+	for (size_t i = 0; i < tdbf->hashcount; i++) {
+		result = hashes[i] % tdbf->size;
 
 		size_t value;
-		switch (tdbf.bytes) {
-		case 1: value = ((uint8_t *)tdbf.filter)[result];  break;
-		case 2: value = ((uint16_t *)tdbf.filter)[result]; break;
-		case 4: value = ((uint32_t *)tdbf.filter)[result]; break;
-		case 8: value = ((uint64_t *)tdbf.filter)[result]; break;
+		switch (tdbf->bytes) {
+		case 1: value = ((uint8_t *)tdbf->filter)[result];  break;
+		case 2: value = ((uint16_t *)tdbf->filter)[result]; break;
+		case 4: value = ((uint32_t *)tdbf->filter)[result]; break;
+		case 8: value = ((uint64_t *)tdbf->filter)[result]; break;
 		}
 
-		if (value != 0 && ((ts - value + tdbf.max_time) % tdbf.max_time) > tdbf.timeout) {
+		if (value != 0 && ((ts - value + tdbf->max_time) % tdbf->max_time) > tdbf->timeout) {
 			return true; // element has expired
 		}
 	}
@@ -436,7 +438,7 @@ bool tdbloom_has_expired(const tdbloom tdbf, const void *element, size_t len) {
  *
  * TODO: test
  */
-bool tdbloom_has_expired_string(const tdbloom tdbf, const char *element) {
+bool tdbloom_has_expired_string(const tdbloom *tdbf, const char *element) {
 	return tdbloom_has_expired(tdbf, element, strlen(element));
 }
 
@@ -458,7 +460,7 @@ bool tdbloom_has_expired_string(const tdbloom tdbf, const char *element) {
  * TODO: test
  */
 bool tdbloom_reset_if_expired(tdbloom *tdbf, const void *element, size_t len) {
-	if (tdbloom_has_expired(*tdbf, element, len)) {
+	if (tdbloom_has_expired(tdbf, element, len)) {
 		tdbloom_add(tdbf, element, len);
 		return true; // element was expired and has been reset
 	}
@@ -523,16 +525,36 @@ const char *tdbloom_get_name(const tdbloom *tdbf) {
  *
  * TODO: test
  */
-tdbloom_error_t tdbloom_save(tdbloom tdbf, const char *path) {
-	FILE *fp;
+tdbloom_error_t tdbloom_save(tdbloom *tdbf, const char *path) {
+	FILE         *fp;
+	tdbloom_file  tdbff = {0};
+
+	tdbff.magic[0] = '!';
+	tdbff.magic[1] = 't';
+	tdbff.magic[2] = 'd';
+	tdbff.magic[3] = 'b';
+	tdbff.magic[4] = 'l';
+	tdbff.magic[5] = 'o';
+	tdbff.magic[6] = 'o';
+	tdbff.magic[7] = '!';
+
+	tdbff.size            = tdbf->size;
+	tdbff.filter_size     = tdbf->filter_size;
+	tdbff.hashcount       = tdbf->hashcount;
+	tdbff.expected        = tdbf->expected;
+	tdbff.accuracy        = tdbf->accuracy;
+	tdbff.bytes           = tdbf->bytes;
+	tdbff.start_time      = tdbf->start_time;
+	strncpy((char *)tdbff.name, tdbf->name, TDBLOOM_MAX_NAME_LENGTH);
+	tdbff.name[TDBLOOM_MAX_NAME_LENGTH] = '\0';
 
 	fp = fopen(path, "wb");
 	if (fp == NULL) {
 		return TDBF_FOPEN;
 	}
 
-	if (fwrite(&tdbf, sizeof(tdbloom), 1, fp) != 1 ||
-		fwrite(tdbf.filter, tdbf.filter_size, 1, fp)) {
+	if (fwrite(&tdbff, sizeof(tdbloom_file), 1, fp) != 1 ||
+		fwrite(tdbf->filter, tdbf->filter_size, 1, fp)) {
 		fclose(fp);
 		return TDBF_FWRITE;
 	}
@@ -540,6 +562,40 @@ tdbloom_error_t tdbloom_save(tdbloom tdbf, const char *path) {
 	fclose(fp);
 
 	return TDBF_SUCCESS;
+}
+
+// TODO document
+tdbloom_error_t tdbloom_save_fd(tdbloom *tdbf, int fd) {
+    tdbloom_file tdbff = {0};
+
+    tdbff.magic[0] = '!';
+    tdbff.magic[1] = 't';
+    tdbff.magic[2] = 'd';
+    tdbff.magic[3] = 'b';
+    tdbff.magic[4] = 'l';
+    tdbff.magic[5] = 'o';
+    tdbff.magic[6] = 'o';
+    tdbff.magic[7] = '!';
+
+    tdbff.size        = tdbf->size;
+    tdbff.filter_size = tdbf->filter_size;
+    tdbff.hashcount   = tdbf->hashcount;
+    tdbff.expected    = tdbf->expected;
+    tdbff.accuracy    = tdbf->accuracy;
+    tdbff.bytes       = tdbf->bytes;
+    tdbff.start_time  = tdbf->start_time;
+    strncpy((char *)tdbff.name, tdbf->name, TDBLOOM_MAX_NAME_LENGTH);
+    tdbff.name[TDBLOOM_MAX_NAME_LENGTH] = '\0';
+
+    if (write(fd, &tdbff, sizeof(tdbloom_file)) != sizeof(tdbloom_file)) {
+        return TDBF_FWRITE;
+    }
+
+    if (write(fd, tdbf->filter, tdbf->filter_size) != (ssize_t)tdbf->filter_size) {
+        return TDBF_FWRITE;
+    }
+
+    return TDBF_SUCCESS;
 }
 
 /**
@@ -561,8 +617,9 @@ tdbloom_error_t tdbloom_save(tdbloom tdbf, const char *path) {
  * TODO: test
  */
 tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
-	FILE        *fp;
-	struct stat  sb;
+	FILE         *fp;
+	struct stat   sb;
+	tdbloom_file  tdbff;
 
 	fp = fopen(path, "rb");
 	if (fp == NULL) {
@@ -574,10 +631,21 @@ tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
 		return TDBF_FSTAT;
 	}
 
-	if (fread(tdbf, sizeof(tdbloom), 1, fp) != 1) {
+	if (fread(&tdbff, sizeof(tdbloom_file), 1, fp) != 1) {
 		fclose(fp);
 		return TDBF_FREAD;
 	}
+
+	tdbf->size        = tdbff.size;
+	tdbf->filter_size = tdbff.filter_size;
+	tdbf->hashcount   = tdbff.hashcount;
+	tdbf->expected    = tdbff.expected;
+	tdbf->max_time    = tdbff.max_time;
+	tdbf->start_time  = tdbff.start_time;
+	tdbf->bytes       = tdbff.bytes;
+	tdbf->accuracy    = tdbff.accuracy;
+	strncpy(tdbf->name, (char *)tdbff.name, TDBLOOM_MAX_NAME_LENGTH);
+	tdbf->name[TDBLOOM_MAX_NAME_LENGTH] = '\0';
 
 	// basic sanity checks. should fail if file is not a filter
 	if (tdbf->filter_size != (tdbf->size * tdbf->bytes) ||
@@ -602,6 +670,46 @@ tdbloom_error_t tdbloom_load(tdbloom *tdbf, const char *path) {
 	fclose(fp);
 
 	return TDBF_SUCCESS;
+}
+
+// TODO document
+tdbloom_error_t tdbloom_load_fd(tdbloom *tdbf, int fd) {
+    struct stat sb;
+    tdbloom_file tdbff;
+
+    if (fstat(fd, &sb) == -1) {
+        return TDBF_FSTAT;
+    }
+
+    if (read(fd, &tdbff, sizeof(tdbloom_file)) != sizeof(tdbloom_file)) {
+        return TDBF_FREAD;
+    }
+
+    tdbf->size        = tdbff.size;
+    tdbf->filter_size = tdbff.filter_size;
+    tdbf->hashcount   = tdbff.hashcount;
+    tdbf->expected    = tdbff.expected;
+    tdbf->accuracy    = tdbff.accuracy;
+    tdbf->bytes       = tdbff.bytes;
+    tdbf->start_time  = tdbff.start_time;
+    strncpy(tdbf->name, (char *)tdbff.name, TDBLOOM_MAX_NAME_LENGTH);
+    tdbf->name[TDBLOOM_MAX_NAME_LENGTH] = '\0';
+
+    if (sizeof(tdbloom_file) + tdbf->filter_size != sb.st_size) {
+        return TDBF_INVALIDFILE;
+    }
+
+    tdbf->filter = malloc(tdbf->filter_size);
+    if (tdbf->filter == NULL) {
+        return TDBF_OUTOFMEMORY;
+    }
+
+    if (read(fd, tdbf->filter, tdbf->filter_size) != (ssize_t)tdbf->filter_size) {
+        free(tdbf->filter);
+        return TDBF_FREAD;
+    }
+
+    return TDBF_SUCCESS;
 }
 
 /**
