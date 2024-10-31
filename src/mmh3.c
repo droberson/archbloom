@@ -309,10 +309,7 @@ void mmh3_64_make_hashes(const void *data, size_t len, size_t count, uint64_t *h
     uint64_t hash[2];
     mmh3_128(data, len, 0, hash);
 
-    uint64_t h1 = hash[0];
-    uint64_t h2 = hash[1];
-
     for (size_t i = 0; i < count; i++) {
-        hash_output[i] = (h1 + i * h2) % UINT64_MAX;
+        hash_output[i] = (hash[0] + i * hash[1]) % UINT64_MAX;
     }
 }
