@@ -28,4 +28,5 @@ desktop.ini
 /.vscode/
 *.iml
 *.code-workspace
+build/
 bloom
