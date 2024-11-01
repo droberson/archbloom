@@ -102,3 +102,9 @@ if(DOXYGEN_FOUND)
 else()
     message(STATUS "Doxygen not found. Not building documentation.")
 endif()
+
+# CLI tools
+add_executable(bloomtool bin/bloomtool.c)
+target_link_libraries(bloomtool PRIVATE archbloom_shared)
+target_include_directories(bloomtool PRIVATE ${PROJECT_SOURCE_DIR}/src})
+install(TARGETS bloomtool DESTINATION ${CMAKE_INSTALL_BINDIR})
