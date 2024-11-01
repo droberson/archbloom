@@ -35,20 +35,31 @@ target_include_directories(archbloom_shared PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(archbloom_static PUBLIC m)
 target_link_libraries(archbloom_shared PUBLIC m)
 
-# Optionally add an example/test program
-add_executable(test_bloom_basic tests/test_bloom_basic.c)
-add_executable(test_cbloom_basic tests/test_cbloom_basic.c)
-add_executable(test_tdbloom_basic tests/test_tdbloom_basic.c)
-add_executable(test_tdcbloom_basic tests/test_tdcbloom_basic.c)
-add_executable(test_cuckoo_basic tests/test_cuckoo_basic.c)
-add_executable(test_gaussiannb_basic tests/test_gaussiannb_basic.c)
+# Test programs
+set(TEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/tests)
 
-# Link the example program with the shared library
+add_executable(test_bloom_basic tests/test_bloom_basic.c)
+set_target_properties(test_bloom_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_bloom_basic PRIVATE archbloom_shared)
+
+add_executable(test_cbloom_basic tests/test_cbloom_basic.c)
+set_target_properties(test_cbloom_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_cbloom_basic PRIVATE archbloom_shared)
+
+add_executable(test_tdbloom_basic tests/test_tdbloom_basic.c)
+set_target_properties(test_tdbloom_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_tdbloom_basic PRIVATE archbloom_shared)
+
+add_executable(test_tdcbloom_basic tests/test_tdcbloom_basic.c)
+set_target_properties(test_tdcbloom_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_tdcbloom_basic PRIVATE archbloom_shared)
+
+add_executable(test_cuckoo_basic tests/test_cuckoo_basic.c)
+set_target_properties(test_cuckoo_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_cuckoo_basic PRIVATE archbloom_shared)
+
+add_executable(test_gaussiannb_basic tests/test_gaussiannb_basic.c)
+set_target_properties(test_gaussiannb_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_gaussiannb_basic PRIVATE archbloom_shared)
 
 # Install rules
