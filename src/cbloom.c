@@ -74,7 +74,7 @@ cbloom_error_t cbloom_init(cbloomfilter *cbf, const size_t expected, const float
 	cbf->csize     = csize;
 	cbf->accuracy  = accuracy;
 	cbf->expected  = expected;
-	strncpy(cbf->name, "DEFAULT", 7);
+	snprintf(cbf->name, sizeof(cbf->name), "DEFAULT");
 
 	switch (csize) {
 	case COUNTER_4BIT:
