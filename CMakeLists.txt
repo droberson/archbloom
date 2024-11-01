@@ -62,6 +62,14 @@ add_executable(test_gaussiannb_basic tests/test_gaussiannb_basic.c)
 set_target_properties(test_gaussiannb_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_gaussiannb_basic PRIVATE archbloom_shared)
 
+enable_testing()
+add_test(NAME bloom COMMAND tests/test_bloom_basic)
+add_test(NAME cbloom COMMAND tests/test_cbloom_basic)
+add_test(NAME tdbloom COMMAND tests/test_tdbloom_basic)
+add_test(NAME tdcbloom COMMAND tests/test_tdcbloom_basic)
+add_test(NAME cuckoo COMMAND tests/test_cuckoo_basic)
+add_test(NAME gaussiannb COMMAND tests/test_gaussiannb_basic)
+
 # Install rules
 install(TARGETS archbloom_shared archbloom_static
         LIBRARY DESTINATION lib)
@@ -75,15 +83,6 @@ install(FILES
     src/gaussiannb.h
     DESTINATION include/archbloom)
 install(CODE "execute_process(COMMAND ldconfig)")
-
-# Testing
-enable_testing()
-add_test(NAME bloom COMMAND tests/test_bloom_basic)
-add_test(NAME cbloom COMMAND tests/test_cbloom_basic)
-add_test(NAME tdbloom COMMAND tests/test_tdbloom_basic)
-add_test(NAME tdcbloom COMMAND tests/test_tdcbloom_basic)
-add_test(NAME cuckoo COMMAND tests/test_cuckoo_basic)
-add_test(NAME gaussiannb COMMAND tests/test_gaussiannb_basic)
 
 # Doxygen
 # To build documentation: cmake -DBUILD_DOC=ON
