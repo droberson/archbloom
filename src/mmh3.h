@@ -4,6 +4,7 @@
 #define MMH3_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /* function definitions
  */
