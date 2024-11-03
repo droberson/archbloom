@@ -183,7 +183,7 @@ uint64_t mmh3_64(const void *key, const size_t len, uint64_t seed) {
     h1 += h2;
     h2 += h1;
 
-    return h1;
+    return h1 ^ h2;
 }
 
 /* mmh3_64_string() -- calculate 64 bit mmh3 hash of a string.
