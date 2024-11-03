@@ -16,6 +16,7 @@
 #ifndef BLOOM_H
 #define BLOOM_H
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
