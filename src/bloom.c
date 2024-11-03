@@ -258,7 +258,6 @@ float bloom_estimate_intersection(const bloomfilter *bf1, const bloomfilter *bf2
 
 	size_t intersection_count = 0;
 	size_t union_count        = 0;
-	size_t bits_total         = bf1->bitmap_size * 8;
 
 	for (size_t i = 0; i < bf1->bitmap_size; i++) {
 		uint8_t intersection_bits = bf1->bitmap[i] & bf2->bitmap[i];
