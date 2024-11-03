@@ -170,9 +170,10 @@ const char *cbloom_get_name(cbloomfilter *cbf) {
  */
 static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
 	switch (cbf->csize) {
-	case COUNTER_4BIT:
+	case COUNTER_4BIT: {
 		uint8_t byte = ((uint8_t *)cbf->countermap)[position / 2];
 		return (position % 2 == 0) ? (byte & 0x0f) : (byte >> 4);
+	}
 	case COUNTER_8BIT:	return  ((uint8_t *)cbf->countermap)[position];
 	case COUNTER_16BIT:	return ((uint16_t *)cbf->countermap)[position];
 	case COUNTER_32BIT:	return ((uint32_t *)cbf->countermap)[position];
@@ -184,7 +185,7 @@ static inline uint64_t get_counter(const cbloomfilter *cbf, uint64_t position) {
 
 static inline void set_counter(const cbloomfilter *cbf, uint64_t position, uint64_t value) {
 	switch (cbf->csize) {
-	case COUNTER_4BIT:
+	case COUNTER_4BIT: {
 		uint8_t *byte = &((uint8_t *)cbf->countermap)[position / 2];
 		value = (value > 15) ? 15 : value; // 4 bit max is 15
 		if (position % 2 == 0) {
@@ -193,6 +194,7 @@ static inline void set_counter(const cbloomfilter *cbf, uint64_t position, uint6
 			*byte = (*byte & 0x0f) | (value << 4); // upper nibble
 		}
 		break;
+	}
 	case COUNTER_8BIT:
 		((uint8_t *)cbf->countermap)[position] =
 			(value > UINT8_MAX) ? UINT8_MAX : (uint8_t)value;
