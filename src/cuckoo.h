@@ -3,6 +3,7 @@
 #ifndef CUCKOO_H
 #define CUCKOO_H
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
