@@ -6,7 +6,6 @@ OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@"
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 GENERATE_MAN           = YES
-MAN_OUTPUT             = man
 INPUT                  = "@PROJECT_SOURCE_DIR@/src"
 RECURSIVE              = YES
 EXTRACT_ALL            = YES
