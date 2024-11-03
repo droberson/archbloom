@@ -15,6 +15,7 @@
 #ifndef CBLOOM_H
 #define CBLOOM_H
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
