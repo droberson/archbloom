@@ -62,6 +62,10 @@ add_executable(test_gaussiannb_basic tests/test_gaussiannb_basic.c)
 set_target_properties(test_gaussiannb_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
 target_link_libraries(test_gaussiannb_basic PRIVATE archbloom_shared)
 
+add_executable(test_mmh3_basic tests/test_mmh3_basic.c)
+set_target_properties(test_mmh3_basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR})
+target_link_libraries(test_mmh3_basic PRIVATE archbloom_shared)
+
 enable_testing()
 add_test(NAME bloom COMMAND tests/test_bloom_basic)
 add_test(NAME cbloom COMMAND tests/test_cbloom_basic)
@@ -69,6 +73,7 @@ add_test(NAME tdbloom COMMAND tests/test_tdbloom_basic)
 add_test(NAME tdcbloom COMMAND tests/test_tdcbloom_basic)
 add_test(NAME cuckoo COMMAND tests/test_cuckoo_basic)
 add_test(NAME gaussiannb COMMAND tests/test_gaussiannb_basic)
+add_test(NAME mmh3 COMMAND tests/test_mmh3_basic)
 
 # Install rules
 install(TARGETS archbloom_shared archbloom_static
@@ -104,9 +109,15 @@ if(DOXYGEN_FOUND)
 	)
 
 	# Install documentation
+	# TODO this is installing to the wrong directory:
+	#      /usr/local/share/man/man
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
+	#file(GLOB MAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/man/man3/*.3")
+	#install(FILES ${MAN_FILES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man3)
 	# TODO compress manpages
-	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${CMAKE_INSTALL_MANDIR})
+	message("CMAKE_INSTALL_MANDIR is set to: ${CMAKE_INSTALL_MANDIR}")
+	#install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${CMAKE_INSTALL_MANDIR})
 
     endif()
 else()
