@@ -133,10 +133,10 @@ tdcbloom_error_t tdcbloom_init(tdcbloom *tdcbf,
  * @param tdcbf Pointer to the tdcbloom structure to destroy.
  */
 void tdcbloom_destroy(tdcbloom *tdcbf) {
-    if (tdcbf->entrymap) {
-        free(tdcbf->entrymap);
-        tdcbf->entrymap = NULL;
-    }
+	if (tdcbf->entrymap) {
+		free(tdcbf->entrymap);
+		tdcbf->entrymap = NULL;
+	}
 }
 
 /**
@@ -152,50 +152,50 @@ void tdcbloom_destroy(tdcbloom *tdcbf) {
  * TODO: test
  */
 void tdcbloom_clear(tdcbloom *tdcbf) {
-    memset(tdcbf->entrymap, 0, tdcbf->size * tdcbf->entry_size);
-    tdcbf->start_time = get_monotonic_time();
+	memset(tdcbf->entrymap, 0, tdcbf->size * tdcbf->entry_size);
+	tdcbf->start_time = get_monotonic_time();
 }
 
 // helper function to read timer
 static inline uint64_t read_timer(void *timestamp, timer_size tsize) {
-    switch (tsize) {
-        case TIMER_8BIT:  return *(uint8_t *)timestamp;
-        case TIMER_16BIT: return *(uint16_t *)timestamp;
-        case TIMER_32BIT: return *(uint32_t *)timestamp;
-        case TIMER_64BIT: return *(uint64_t *)timestamp;
-    }
-    return 0; // Default return if size is not handled
+	switch (tsize) {
+	case TIMER_8BIT:  return *(uint8_t *)timestamp;
+	case TIMER_16BIT: return *(uint16_t *)timestamp;
+	case TIMER_32BIT: return *(uint32_t *)timestamp;
+	case TIMER_64BIT: return *(uint64_t *)timestamp;
+	}
+	return 0; // Default return if size is not handled
 }
 
 // helper function to write timer
 static inline void write_timer(void *timestamp, timer_size tsize, uint64_t value) {
-    switch (tsize) {
-        case TIMER_8BIT:  *(uint8_t *)timestamp = value; break;
-        case TIMER_16BIT: *(uint16_t *)timestamp = value; break;
-        case TIMER_32BIT: *(uint32_t *)timestamp = value; break;
-        case TIMER_64BIT: *(uint64_t *)timestamp = value; break;
-    }
+	switch (tsize) {
+	case TIMER_8BIT:  *(uint8_t *)timestamp = value; break;
+	case TIMER_16BIT: *(uint16_t *)timestamp = value; break;
+	case TIMER_32BIT: *(uint32_t *)timestamp = value; break;
+	case TIMER_64BIT: *(uint64_t *)timestamp = value; break;
+	}
 }
 
 // helper function to read counter
 static inline uint64_t read_counter(void *counter, counter_size csize) {
-    switch (csize) {
-        case COUNTER_8BIT:  return *(uint8_t *)counter;
-        case COUNTER_16BIT: return *(uint16_t *)counter;
-        case COUNTER_32BIT: return *(uint32_t *)counter;
-        case COUNTER_64BIT: return *(uint64_t *)counter;
-    }
-    return 0;
+	switch (csize) {
+	case COUNTER_8BIT:  return *(uint8_t *)counter;
+	case COUNTER_16BIT: return *(uint16_t *)counter;
+	case COUNTER_32BIT: return *(uint32_t *)counter;
+	case COUNTER_64BIT: return *(uint64_t *)counter;
+	}
+	return 0;
 }
 
 // helper function to write counter
 static inline void write_counter(void *counter, counter_size csize, uint64_t value) {
-    switch (csize) {
-        case COUNTER_8BIT:  *(uint8_t *)counter = value; break;
-        case COUNTER_16BIT: *(uint16_t *)counter = value; break;
-        case COUNTER_32BIT: *(uint32_t *)counter = value; break;
-        case COUNTER_64BIT: *(uint64_t *)counter = value; break;
-    }
+	switch (csize) {
+	case COUNTER_8BIT:  *(uint8_t *)counter = value; break;
+	case COUNTER_16BIT: *(uint16_t *)counter = value; break;
+	case COUNTER_32BIT: *(uint32_t *)counter = value; break;
+	case COUNTER_64BIT: *(uint64_t *)counter = value; break;
+	}
 }
 
 /**
@@ -212,24 +212,24 @@ static inline void write_counter(void *counter, counter_size csize, uint64_t val
  * TODO: test
  */
 size_t tdcbloom_clear_expired(tdcbloom *tdcbf) {
-    time_t now           = get_monotonic_time();
-    size_t expired_count = 0;
+	time_t now           = get_monotonic_time();
+	size_t expired_count = 0;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        void *counter = entry;
-        void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
-        uint64_t entry_ts = read_timer(timestamp, tdcbf->timer_size);
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		void *counter = entry;
+		void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
+		uint64_t entry_ts = read_timer(timestamp, tdcbf->timer_size);
 
-        // Check if the entry has expired
-        if (entry_ts != 0 && (now - entry_ts) > tdcbf->timeout) {
-            memset(counter, 0, tdcbf->counter_size_bytes);
-            memset(timestamp, 0, tdcbf->timer_size_bytes);
-            expired_count++;
-        }
-    }
+		// Check if the entry has expired
+		if (entry_ts != 0 && (now - entry_ts) > tdcbf->timeout) {
+			memset(counter, 0, tdcbf->counter_size_bytes);
+			memset(timestamp, 0, tdcbf->timer_size_bytes);
+			expired_count++;
+		}
+	}
 
-    return expired_count;
+	return expired_count;
 }
 
 /**
@@ -246,22 +246,22 @@ size_t tdcbloom_clear_expired(tdcbloom *tdcbf) {
  * TODO: Test
  */
 size_t tdcbloom_count_expired(tdcbloom *tdcbf) {
-    time_t now           = get_monotonic_time();
-    size_t expired_count = 0;
+	time_t now           = get_monotonic_time();
+	size_t expired_count = 0;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        void *counter = entry;
-        void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
-        uint64_t entry_ts = read_timer(timestamp, tdcbf->timer_size);
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		void *counter = entry;
+		void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
+		uint64_t entry_ts = read_timer(timestamp, tdcbf->timer_size);
 
-        // Check if the entry has expired
-        if (entry_ts != 0 && (now - entry_ts) > tdcbf->timeout) {
-            expired_count++;
-        }
-    }
+		// Check if the entry has expired
+		if (entry_ts != 0 && (now - entry_ts) > tdcbf->timeout) {
+			expired_count++;
+		}
+	}
 
-    return expired_count;
+	return expired_count;
 }
 
 /**
@@ -302,21 +302,21 @@ void tdcbloom_reset_start_time(tdcbloom *tdcbf) {
  */
 void  tdcbloom_adjust_timeout(tdcbloom *tdcbf, size_t new_timeout) {
 	time_t now = get_monotonic_time();
-    tdcbf->timeout = new_timeout;
+	tdcbf->timeout = new_timeout;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
-        uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
 
-        if (timestamp != 0) { // adjust timeout to account for new timeout
-            time_t elapsed_time = (now - timestamp + tdcbf->max_time) % tdcbf->max_time;
+		if (timestamp != 0) { // adjust timeout to account for new timeout
+			time_t elapsed_time = (now - timestamp + tdcbf->max_time) % tdcbf->max_time;
 
-            if (elapsed_time > new_timeout) { // clear expired entries
-                memset(entry, 0, tdcbf->entry_size);
-            }
-        }
-    }
+			if (elapsed_time > new_timeout) { // clear expired entries
+				memset(entry, 0, tdcbf->entry_size);
+			}
+		}
+	}
 }
 
 /**
@@ -334,8 +334,8 @@ void  tdcbloom_adjust_timeout(tdcbloom *tdcbf, size_t new_timeout) {
  * TODO: test
  */
 float tdcbloom_saturation(const tdcbloom *tdcbf) {
-    size_t active_count = tdcbloom_saturation_count(tdcbf);
-    return (float)active_count / (float)tdcbf->size * 100.0;
+	size_t active_count = tdcbloom_saturation_count(tdcbf);
+	return (float)active_count / (float)tdcbf->size * 100.0;
 }
 
 /**
@@ -353,66 +353,66 @@ float tdcbloom_saturation(const tdcbloom *tdcbf) {
  * TODO: test
  */
 size_t tdcbloom_saturation_count(const tdcbloom *tdcbf) {
-    size_t count = 0;
+	size_t count = 0;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        void *counter = entry;
-        void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
-        bool is_non_zero = false;
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		void *counter = entry;
+		void *timestamp = entry + (tdcbf->entry_size - tdcbf->timer_size_bytes);
+		bool is_non_zero = false;
 
-        switch (tdcbf->counter_size) {
-            case COUNTER_8BIT:
-				if (*(uint8_t *)counter != 0) {
-					is_non_zero = true;
-				}
-				break;
-            case COUNTER_16BIT:
-				if (*(uint16_t *)counter != 0) {
-					is_non_zero = true;
-				}
-				break;
-            case COUNTER_32BIT:
-				if (*(uint32_t *)counter != 0) {
-					is_non_zero = true;
-				}
-				break;
-            case COUNTER_64BIT:
-				if (*(uint64_t *)counter != 0) {
-					is_non_zero = true;
-				}
-				break;
-        }
+		switch (tdcbf->counter_size) {
+		case COUNTER_8BIT:
+			if (*(uint8_t *)counter != 0) {
+				is_non_zero = true;
+			}
+			break;
+		case COUNTER_16BIT:
+			if (*(uint16_t *)counter != 0) {
+				is_non_zero = true;
+			}
+			break;
+		case COUNTER_32BIT:
+			if (*(uint32_t *)counter != 0) {
+				is_non_zero = true;
+			}
+			break;
+		case COUNTER_64BIT:
+			if (*(uint64_t *)counter != 0) {
+				is_non_zero = true;
+			}
+			break;
+		}
 
-        if (is_non_zero == false) { // count is zero. check timestamps.
-            switch (tdcbf->timer_size) {
-                case TIMER_8BIT:
-					if (*(uint8_t *)timestamp  != 0) {
-						count++;
-					}
-					break;
-                case TIMER_16BIT:
-					if (*(uint16_t *)timestamp != 0) {
-						count++;
-					}
-					break;
-                case TIMER_32BIT:
-					if (*(uint32_t *)timestamp != 0) {
-						count++;
-					}
-					break;
-                case TIMER_64BIT:
-					if (*(uint64_t *)timestamp != 0) {
-						count++;
-					}
-					break;
-            }
-        } else {
+		if (is_non_zero == false) { // count is zero. check timestamps.
+			switch (tdcbf->timer_size) {
+			case TIMER_8BIT:
+				if (*(uint8_t *)timestamp  != 0) {
+					count++;
+				}
+				break;
+			case TIMER_16BIT:
+				if (*(uint16_t *)timestamp != 0) {
+					count++;
+				}
+				break;
+			case TIMER_32BIT:
+				if (*(uint32_t *)timestamp != 0) {
+					count++;
+				}
+				break;
+			case TIMER_64BIT:
+				if (*(uint64_t *)timestamp != 0) {
+					count++;
+				}
+				break;
+			}
+		} else {
 			count++; // counter is non-zero.
 		}
-    }
+	}
 
-    return count;
+	return count;
 }
 
 /**
@@ -424,28 +424,28 @@ size_t tdcbloom_saturation_count(const tdcbloom *tdcbf) {
  * @note This function is static and intended for internal use.
  */
 static inline void increment_counter(void *counter, counter_size csize) {
-    switch (csize) {
-        case COUNTER_8BIT:
-            if (*(uint8_t *)counter < UINT8_MAX) {
-                (*(uint8_t *)counter)++;
-            }
-            break;
-        case COUNTER_16BIT:
-            if (*(uint16_t *)counter < UINT16_MAX) {
-                (*(uint16_t *)counter)++;
-            }
-            break;
-        case COUNTER_32BIT:
-            if (*(uint32_t *)counter < UINT32_MAX) {
-                (*(uint32_t *)counter)++;
-            }
-            break;
-        case COUNTER_64BIT:
-            if (*(uint64_t *)counter < UINT64_MAX) {
-                (*(uint64_t *)counter)++;
-            }
-            break;
-    }
+	switch (csize) {
+	case COUNTER_8BIT:
+		if (*(uint8_t *)counter < UINT8_MAX) {
+			(*(uint8_t *)counter)++;
+		}
+		break;
+	case COUNTER_16BIT:
+		if (*(uint16_t *)counter < UINT16_MAX) {
+			(*(uint16_t *)counter)++;
+		}
+		break;
+	case COUNTER_32BIT:
+		if (*(uint32_t *)counter < UINT32_MAX) {
+			(*(uint32_t *)counter)++;
+		}
+		break;
+	case COUNTER_64BIT:
+		if (*(uint64_t *)counter < UINT64_MAX) {
+			(*(uint64_t *)counter)++;
+		}
+		break;
+	}
 }
 
 /**
@@ -457,28 +457,28 @@ static inline void increment_counter(void *counter, counter_size csize) {
  * @note This function is static and intended for internal use.
  */
 static inline void decrement_counter(void *counter, counter_size csize) {
-    switch (csize) {
-        case COUNTER_8BIT:
-            if (*(uint8_t *)counter > 0) {
-                (*(uint8_t *)counter)--;
-            }
-            break;
-        case COUNTER_16BIT:
-            if (*(uint16_t *)counter > 0) {
-                (*(uint16_t *)counter)--;
-            }
-            break;
-        case COUNTER_32BIT:
-            if (*(uint32_t *)counter > 0) {
-                (*(uint32_t *)counter)--;
-            }
-            break;
-        case COUNTER_64BIT:
-            if (*(uint64_t *)counter > 0) {
-                (*(uint64_t *)counter)--;
-            }
-            break;
-    }
+	switch (csize) {
+	case COUNTER_8BIT:
+		if (*(uint8_t *)counter > 0) {
+			(*(uint8_t *)counter)--;
+		}
+		break;
+	case COUNTER_16BIT:
+		if (*(uint16_t *)counter > 0) {
+			(*(uint16_t *)counter)--;
+		}
+		break;
+	case COUNTER_32BIT:
+		if (*(uint32_t *)counter > 0) {
+			(*(uint32_t *)counter)--;
+		}
+		break;
+	case COUNTER_64BIT:
+		if (*(uint64_t *)counter > 0) {
+			(*(uint64_t *)counter)--;
+		}
+		break;
+	}
 }
 
 // set_timestamp() - helper function to set a timestamp
@@ -513,20 +513,20 @@ static inline void set_timestamp(void *timestamp, timer_size tsize, time_t ts) {
  * there are no non-zero entries, the function returns 0.0.
  */
 float tdcbloom_get_average_count(const tdcbloom *tdcbf) {
-    size_t non_zero_entries = 0;
-    double average_count    = 0.0;
+	size_t non_zero_entries = 0;
+	double average_count    = 0.0;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        uint64_t count = read_counter(entry, tdcbf->counter_size);
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		uint64_t count = read_counter(entry, tdcbf->counter_size);
 
-        if (count > 0) {
-            non_zero_entries++;
-            average_count += (double)(count - average_count) / non_zero_entries;
-        }
-    }
+		if (count > 0) {
+			non_zero_entries++;
+			average_count += (double)(count - average_count) / non_zero_entries;
+		}
+	}
 
-    return (non_zero_entries == 0) ? 0.0 : (float)average_count;
+	return (non_zero_entries == 0) ? 0.0 : (float)average_count;
 }
 
 /**
@@ -541,19 +541,19 @@ float tdcbloom_get_average_count(const tdcbloom *tdcbf) {
  * @param len Length of the element in bytes.
  */
 void tdcbloom_add(tdcbloom *tdcbf, const void *element, const size_t len) {
-    uint64_t position;
-    time_t   now = get_monotonic_time();
+	uint64_t position;
+	time_t   now = get_monotonic_time();
 	uint64_t hashes[tdcbf->hashcount];
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
-        position = hashes[i] % tdcbf->size;
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
-        increment_counter(entry, tdcbf->counter_size);
-        void *timestamp_base = entry + tdcbf->counter_size_bytes;
-        set_timestamp(timestamp_base, tdcbf->timer_size, now);
-    }
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
+		position = hashes[i] % tdcbf->size;
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
+		increment_counter(entry, tdcbf->counter_size);
+		void *timestamp_base = entry + tdcbf->counter_size_bytes;
+		set_timestamp(timestamp_base, tdcbf->timer_size, now);
+	}
 }
 
 /**
@@ -582,31 +582,31 @@ void tdcbloom_add_string(tdcbloom *tdcbf, const char *element) {
  * @return false if the element is definitely not in the filter or has expired.
  */
 bool tdcbloom_lookup(const tdcbloom *tdcbf, const void *element, const size_t len) {
-    uint64_t position;
-    time_t now = get_monotonic_time();
+	uint64_t position;
+	time_t now = get_monotonic_time();
 	uint64_t hashes[tdcbf->hashcount];
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
-        position = hashes[i] % tdcbf->size;
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
+		position = hashes[i] % tdcbf->size;
 
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
-        uint64_t counter = read_counter(entry, tdcbf->counter_size);
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
+		uint64_t counter = read_counter(entry, tdcbf->counter_size);
 
-        if (counter == 0) {
-            return false; // definitely not in the filter
-        }
+		if (counter == 0) {
+			return false; // definitely not in the filter
+		}
 
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
-        uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
 
-        if (((now - timestamp + tdcbf->max_time) % tdcbf->max_time) > tdcbf->timeout) {
-            return false; // timed out
-        }
-    }
+		if (((now - timestamp + tdcbf->max_time) % tdcbf->max_time) > tdcbf->timeout) {
+			return false; // timed out
+		}
+	}
 
-    return true; // element likely exists and isn't expired
+	return true; // element likely exists and isn't expired
 }
 
 /**
@@ -640,31 +640,31 @@ bool tdcbloom_lookup_string(const tdcbloom *tdcbf, const char *element) {
  * @return false if the element is still valid or never existed.
  */
 bool tdcbloom_has_expired(const tdcbloom *tdcbf, const void *element, size_t len) {
-    uint64_t result;
-    uint64_t hashes[tdcbf->hashcount];
-    time_t now = get_monotonic_time();
+	uint64_t result;
+	uint64_t hashes[tdcbf->hashcount];
+	time_t now = get_monotonic_time();
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
-        result = hashes[i] % tdcbf->size;
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
+		result = hashes[i] % tdcbf->size;
 
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (result * tdcbf->entry_size);
-        uint64_t counter = read_counter(entry, tdcbf->counter_size);
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (result * tdcbf->entry_size);
+		uint64_t counter = read_counter(entry, tdcbf->counter_size);
 
-        if (counter == 0) {
-            return false; // Element is not in the filter
-        }
+		if (counter == 0) {
+			return false; // Element is not in the filter
+		}
 
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
-        uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
 
-        if ((now - timestamp + tdcbf->max_time) % tdcbf->max_time > tdcbf->timeout) {
-            return true; // Element has expired
-        }
-    }
+		if ((now - timestamp + tdcbf->max_time) % tdcbf->max_time > tdcbf->timeout) {
+			return true; // Element has expired
+		}
+	}
 
-    return false; // Element is still valid
+	return false; // Element is still valid
 }
 
 // TODO test
@@ -692,11 +692,11 @@ bool tdcbloom_has_expired_string(const tdcbloom *tdcbf, const char *element) {
  * TODO test
  */
 bool tdcbloom_reset_if_expired(tdcbloom *tdcbf, const void *element, size_t len) {
-    if (tdcbloom_has_expired(tdcbf, element, len)) {
-        tdcbloom_add(tdcbf, element, len);
-        return true; // element was expired and has been reset
-    }
-    return false; // element still valid or did not exist
+	if (tdcbloom_has_expired(tdcbf, element, len)) {
+		tdcbloom_add(tdcbf, element, len);
+		return true; // element was expired and has been reset
+	}
+	return false; // element still valid or did not exist
 }
 
 /**
@@ -734,16 +734,16 @@ bool tdcbloom_reset_if_expired_string(tdcbloom *tdcbf, const char *element) {
  * TODO should this return a value? true if removed, false if not removed?
  */
 void tdcbloom_remove(tdcbloom *tdcbf, const void *element, const size_t len) {
-    uint64_t position;
+	uint64_t position;
 	uint64_t hashes[tdcbf->hashcount];
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
-        position = hashes[i] % tdcbf->size;
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
-        decrement_counter(entry, tdcbf->counter_size);
-    }
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
+		position = hashes[i] % tdcbf->size;
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
+		decrement_counter(entry, tdcbf->counter_size);
+	}
 }
 
 /**
@@ -774,35 +774,35 @@ void tdcbloom_remove_string(tdcbloom *tdcbf, const char *element) {
  */
 size_t tdcbloom_count(const tdcbloom *tdcbf, const void *element, const size_t len) {
 	uint64_t position;
-    size_t   total_count = SIZE_MAX;
-    time_t   now = get_monotonic_time();
+	size_t   total_count = SIZE_MAX;
+	time_t   now = get_monotonic_time();
 	uint64_t hashes[tdcbf->hashcount];
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
 		position = hashes[i] % tdcbf->size;
 
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
-        uint64_t counter = read_counter(entry, tdcbf->counter_size);
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (position * tdcbf->entry_size);
+		uint64_t counter = read_counter(entry, tdcbf->counter_size);
 
-        if (counter == 0) {
-            return 0;  // element is definitely not in set
-        }
+		if (counter == 0) {
+			return 0;  // element is definitely not in set
+		}
 
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
-        uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
 
-        if ((now - timestamp) % tdcbf->max_time > tdcbf->timeout) {
-            return 0;  // element has expired
-        }
+		if ((now - timestamp) % tdcbf->max_time > tdcbf->timeout) {
+			return 0;  // element has expired
+		}
 
-        if (counter < total_count) {
-            total_count = counter;
-        }
-    }
+		if (counter < total_count) {
+			total_count = counter;
+		}
+	}
 
-    return total_count;
+	return total_count;
 }
 
 /**
@@ -842,22 +842,22 @@ size_t tdcbloom_count_string(const tdcbloom *tdcbf, const char *element) {
  */
 bool tdcbloom_age_element(tdcbloom *tdcbf, const void *element, size_t len, size_t age_amount) {
 	uint64_t result;
-    uint64_t hashes[tdcbf->hashcount];
-    time_t now = get_monotonic_time();
+	uint64_t hashes[tdcbf->hashcount];
+	time_t now = get_monotonic_time();
 
 	mmh3_64_make_hashes(element, len, tdcbf->hashcount, hashes);
 
-    for (size_t i = 0; i < tdcbf->hashcount; i++) {
-        result = hashes[i] % tdcbf->size;
+	for (size_t i = 0; i < tdcbf->hashcount; i++) {
+		result = hashes[i] % tdcbf->size;
 
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (result * tdcbf->entry_size);
-        uint64_t counter = read_counter(entry, tdcbf->counter_size);
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (result * tdcbf->entry_size);
+		uint64_t counter = read_counter(entry, tdcbf->counter_size);
 
-        if (counter == 0) {
-            return false; // element definitely not in the filter
-        }
+		if (counter == 0) {
+			return false; // element definitely not in the filter
+		}
 
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
 		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
 
 		if (timestamp > age_amount) {
@@ -866,10 +866,10 @@ bool tdcbloom_age_element(tdcbloom *tdcbf, const void *element, size_t len, size
 			timestamp = 0; // expired. reset timer
 		}
 
-        write_timer(timestamp_ptr, tdcbf->timer_size, timestamp);
-    }
+		write_timer(timestamp_ptr, tdcbf->timer_size, timestamp);
+	}
 
-    return true; // element was found and aged successfully
+	return true; // element was found and aged successfully
 }
 
 /**
@@ -892,39 +892,39 @@ bool tdcbloom_age_element(tdcbloom *tdcbf, const void *element, size_t len, size
  */
 size_t tdcbloom_age_and_remove(tdcbloom *tdcbf, size_t max_age) {
 	time_t now = get_monotonic_time();
-    size_t removed_count = 0;
+	size_t removed_count = 0;
 
-    for (size_t i = 0; i < tdcbf->size; i++) {
-        uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
-        uint64_t counter = read_counter(entry, tdcbf->counter_size);
+	for (size_t i = 0; i < tdcbf->size; i++) {
+		uint8_t *entry = (uint8_t *)tdcbf->entrymap + (i * tdcbf->entry_size);
+		uint64_t counter = read_counter(entry, tdcbf->counter_size);
 
-        if (counter == 0) {
-            continue; // skip if counter is zero
-        }
+		if (counter == 0) {
+			continue; // skip if counter is zero
+		}
 
-        void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
-        uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
-        time_t element_age = (now >= timestamp) ? (now - timestamp) : (now + (tdcbf->max_time - timestamp));
+		void *timestamp_ptr = entry + tdcbf->counter_size_bytes;
+		uint64_t timestamp = read_timer(timestamp_ptr, tdcbf->timer_size);
+		time_t element_age = (now >= timestamp) ? (now - timestamp) : (now + (tdcbf->max_time - timestamp));
 
-        if (element_age > max_age) {
-            // Clear the counter and the timestamp to "remove" the element
-            memset(entry, 0, tdcbf->counter_size_bytes);
-            memset(timestamp_ptr, 0, tdcbf->timer_size_bytes);
-            removed_count++;
-        }
-    }
+		if (element_age > max_age) {
+			// Clear the counter and the timestamp to "remove" the element
+			memset(entry, 0, tdcbf->counter_size_bytes);
+			memset(timestamp_ptr, 0, tdcbf->timer_size_bytes);
+			removed_count++;
+		}
+	}
 
-    return removed_count;
+	return removed_count;
 }
 
-/**  
+/**
  * TODO: implement tdcbloom_save()
  */
 tdcbloom_error_t tdcbloom_save(const tdcbloom *tdcbf, const char *path) {
 	return TDCBF_SUCCESS;
 }
 
-/**  
+/**
  * TODO: implement tdcbloom_load()
  */
 tdcbloom_error_t tdcbloom_load(tdcbloom *tdcbf, const char *path) {
