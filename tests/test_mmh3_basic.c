@@ -10,7 +10,7 @@
 // TODO test entropy
 // TODO test correlation; x should be vastly different than x+1
 
-void random_string(char *str, size_t length) {
+static void random_string(char *str, size_t length) {
     const char alphabet[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     size_t charset_size = sizeof(alphabet) - 1;
 
@@ -18,7 +18,8 @@ void random_string(char *str, size_t length) {
         int random_index = rand() % charset_size;
         str[i] = alphabet[random_index];
     }
-    str[length] = '\0'; // Null-terminate the string
+
+    str[length] = '\0';
 }
 
 double mean(int buckets[], size_t total) {
@@ -31,7 +32,7 @@ double mean(int buckets[], size_t total) {
 	return sum / total;
 }
 
-double variance(int buckets[], int total) {
+static double variance(int buckets[], int total) {
 	double m = mean(buckets, total);
 	double variance = 0.0;
 
@@ -55,9 +56,6 @@ void test_uniform_distribution_mmh3_32(size_t num_buckets, size_t iterations) {
 		uint32_t result = mmh3_32_string(buf, 0);
 		bucket[result % num_buckets]++;
 	}
-
-	//for (size_t i = 0; i < num_buckets; i++)
-	//	printf("%zd - %zd\n", i, bucket[i]);
 
 	int expected = iterations / num_buckets;
 	double v = variance(bucket, num_buckets);
